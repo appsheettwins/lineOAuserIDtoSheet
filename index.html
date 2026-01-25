@@ -2,134 +2,115 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>ลงทะเบียนกิจกรรม</title>
+<title>LIFF Form</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
 body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f2f4f8;
   margin: 0;
-  background: #f3f4f6;
-  font-family: system-ui;
 }
 .container {
   max-width: 420px;
   margin: auto;
-  padding: 16px;
+  padding: 20px;
 }
 .card {
-  background: #fff;
-  border-radius: 18px;
+  background: white;
+  border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,.08);
+  box-shadow: 0 10px 25px rgba(0,0,0,.1);
 }
-h2 { text-align: center; }
 .profile {
   text-align: center;
-  margin-bottom: 16px;
 }
 .profile img {
-  width: 96px;
-  height: 96px;
+  width: 90px;
   border-radius: 50%;
 }
-.profile-name {
-  font-weight: bold;
-  margin-top: 6px;
+h2 {
+  text-align: center;
 }
-label {
-  display: block;
-  margin-top: 14px;
-  font-weight: 600;
-}
-input, select {
+input, select, button {
   width: 100%;
   padding: 12px;
-  border-radius: 12px;
+  margin-top: 12px;
+  border-radius: 10px;
   border: 1px solid #ddd;
-  margin-top: 6px;
   font-size: 16px;
 }
 button {
-  margin-top: 20px;
-  width: 100%;
-  padding: 14px;
-  border-radius: 14px;
-  border: none;
   background: #06c755;
-  color: #fff;
-  font-size: 18px;
+  color: white;
+  border: none;
   font-weight: bold;
 }
 button.secondary {
-  background: #64748b;
+  background: #555;
 }
-.hidden { display: none; }
-.summary p { margin: 10px 0; }
+.hidden {
+  display: none;
+}
+.summary p {
+  margin: 8px 0;
+}
 </style>
 </head>
 
 <body>
+
 <div class="container">
 
 <!-- FORM -->
-<div class="card" id="pageForm">
-  <h2>ลงทะเบียนกิจกรรม</h2>
-
+<div class="card" id="formCard">
   <div class="profile">
-    <img id="profileImage">
-    <div class="profile-name" id="lineName">กำลังโหลด...</div>
+    <img id="picture">
+    <p id="lineName"></p>
   </div>
 
-  <label>ชื่อผู้ลงทะเบียน</label>
-  <input id="inputName" placeholder="กรอกชื่อ-นามสกุล">
+  <h2>แบบฟอร์มลงทะเบียน</h2>
 
-  <label>เบอร์โทรศัพท์</label>
-  <input id="phoneInput" type="tel" placeholder="0812345678">
+  <input id="formName" placeholder="ชื่อ-นามสกุล">
+  <input id="phone" placeholder="เบอร์โทรศัพท์">
 
-  <label>เลือกกิจกรรม</label>
-  <select id="activitySelect">
-    <option value="">-- เลือกกิจกรรม --</option>
+  <select id="activity">
+    <option value="">เลือกกิจกรรม</option>
     <option>ธรรมยาตรา</option>
     <option>จุดประทีป</option>
     <option>ตักบาตร</option>
     <option>ทอดผ้าป่า</option>
   </select>
 
-  <button type="button" onclick="goSummary()">บันทึกข้อมูล</button>
+  <button onclick="submitForm()">บันทึกข้อมูล</button>
 </div>
 
 <!-- SUMMARY -->
-<div class="card hidden" id="pageSummary">
+<div class="card hidden" id="summaryCard">
   <h2>สรุปข้อมูล</h2>
   <div class="summary">
-    <p><b>LINE:</b> <span id="s_line"></span></p>
-    <p><b>ชื่อ:</b> <span id="s_name"></span></p>
-    <p><b>เบอร์:</b> <span id="s_phone"></span></p>
-    <p><b>กิจกรรม:</b> <span id="s_activity"></span></p>
+    <p><b>ชื่อ:</b> <span id="sName"></span></p>
+    <p><b>เบอร์:</b> <span id="sPhone"></span></p>
+    <p><b>กิจกรรม:</b> <span id="sActivity"></span></p>
   </div>
 
-  <button onclick="submitData()">ยืนยันบันทึก</button>
-  <button class="secondary" onclick="backToForm()">เพิ่มข้อมูลใหม่</button>
+  <button class="secondary" onclick="newForm()">เพิ่มข้อมูลใหม่</button>
 </div>
 
 </div>
 
 <script>
-const LIFF_ID = "2008940385-hkDtMTsg";
+const LIFF_ID = "https://liff.line.me/2008940385-hkDtMTsg";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
 let userId = "";
 let lineName = "";
 
-window.onload = async () => {
-  if (!liff.isInClient()) {
-    alert("กรุณาเปิดผ่าน LINE");
-    return;
-  }
-
+async function init() {
   await liff.init({ liffId: LIFF_ID });
+
   if (!liff.isLoggedIn()) {
     liff.login();
     return;
@@ -139,54 +120,51 @@ window.onload = async () => {
   userId = profile.userId;
   lineName = profile.displayName;
 
+  document.getElementById("picture").src = profile.pictureUrl;
   document.getElementById("lineName").textContent = lineName;
-  document.getElementById("profileImage").src = profile.pictureUrl;
-};
+}
 
-function goSummary() {
-  const inputName = document.getElementById("inputName").value.trim();
-  const phone = document.getElementById("phoneInput").value.trim();
-  const activity = document.getElementById("activitySelect").value;
+function submitForm() {
+  const name = document.getElementById("formName").value;
+  const phone = document.getElementById("phone").value;
+  const activity = document.getElementById("activity").value;
 
-  if (!inputName || !phone || !activity) {
+  if (!name || !phone || !activity) {
     alert("กรุณากรอกข้อมูลให้ครบ");
     return;
   }
 
-  s_line.textContent = lineName;
-  s_name.textContent = inputName;
-  s_phone.textContent = phone;
-  s_activity.textContent = activity;
-
-  pageForm.classList.add("hidden");
-  pageSummary.classList.remove("hidden");
-}
-
-function backToForm() {
-  pageSummary.classList.add("hidden");
-  pageForm.classList.remove("hidden");
-}
-
-function submitData() {
   fetch(GAS_URL, {
     method: "POST",
     mode: "no-cors",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       userId: userId,
       lineName: lineName,
-      inputName: inputName.value,
-      phone: phoneInput.value,
-      activity: activitySelect.value
+      formName: name,
+      phone: phone,
+      activity: activity
     })
   });
 
-  alert("บันทึกข้อมูลเรียบร้อย ✅");
-  liff.closeWindow();
+  document.getElementById("sName").textContent = name;
+  document.getElementById("sPhone").textContent = phone;
+  document.getElementById("sActivity").textContent = activity;
+
+  document.getElementById("formCard").classList.add("hidden");
+  document.getElementById("summaryCard").classList.remove("hidden");
 }
 
+function newForm() {
+  document.getElementById("formName").value = "";
+  document.getElementById("phone").value = "";
+  document.getElementById("activity").value = "";
+
+  document.getElementById("summaryCard").classList.add("hidden");
+  document.getElementById("formCard").classList.remove("hidden");
+}
+
+init();
 </script>
 
 </body>
