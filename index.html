@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>LIFF Form</title>
+<title>LIFF Form V1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -11,8 +11,7 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(135deg, #06c755, #00bfa5);
-  min-height: 100vh;
+  background: linear-gradient(135deg,#06c755,#00bfa5);
 }
 .container {
   max-width: 420px;
@@ -29,12 +28,12 @@ body {
   text-align: center;
 }
 .profile img {
-  width: 96px;
-  height: 96px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
 }
 .profile h3 {
-  margin: 8px 0 0;
+  margin: 8px 0;
 }
 input, select {
   width: 100%;
@@ -50,10 +49,10 @@ button {
   padding: 14px;
   border-radius: 14px;
   border: none;
-  font-size: 18px;
-  font-weight: bold;
   background: #06c755;
   color: #fff;
+  font-size: 18px;
+  font-weight: bold;
 }
 .hidden { display:none; }
 </style>
@@ -71,9 +70,14 @@ button {
   </div>
 
   <input id="fullName" placeholder="ชื่อ - นามสกุล">
-  <input id="phone" type="tel" inputmode="numeric" maxlength="10"
-         placeholder="เบอร์โทร 10 หลัก"
-         oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+
+  <input id="phone"
+    type="tel"
+    inputmode="numeric"
+    maxlength="10"
+    placeholder="เบอร์โทรศัพท์ 10 หลัก"
+    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+
   <select id="activity"></select>
   <select id="subActivity"></select>
 
@@ -94,6 +98,7 @@ const LIFF_ID = "2008940385-hkDtMTsg";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
 let profileData = {};
+let activityData = {};
 
 async function init() {
   await liff.init({ liffId: LIFF_ID });
@@ -104,38 +109,36 @@ async function init() {
   }
 
   profileData = await liff.getProfile();
-  document.getElementById("picture").src = profileData.pictureUrl;
-  document.getElementById("lineName").textContent = profileData.displayName;
+  picture.src = profileData.pictureUrl;
+  lineName.textContent = profileData.displayName;
 
   loadActivities();
 }
 
 async function loadActivities() {
   const res = await fetch(GAS_URL + "?mode=activity");
-  const data = await res.json();
+  activityData = await res.json();
 
-  const activitySel = document.getElementById("activity");
-  activitySel.innerHTML = `<option value="">เลือกกิจกรรม</option>`;
-  Object.keys(data).forEach(a => {
-    activitySel.innerHTML += `<option>${a}</option>`;
+  activity.innerHTML = `<option value="">เลือกกิจกรรม</option>`;
+  Object.keys(activityData).forEach(a => {
+    activity.innerHTML += `<option>${a}</option>`;
   });
 
-  activitySel.onchange = () => {
-    const subSel = document.getElementById("subActivity");
-    subSel.innerHTML = `<option value="">เลือกรายการ</option>`;
-    (data[activitySel.value] || []).forEach(s => {
-      subSel.innerHTML += `<option>${s}</option>`;
+  activity.onchange = () => {
+    subActivity.innerHTML = `<option value="">เลือกรายการ</option>`;
+    (activityData[activity.value] || []).forEach(s => {
+      subActivity.innerHTML += `<option>${s}</option>`;
     });
   };
 }
 
 async function saveData() {
-  const fullName = fullNameEl.value = document.getElementById("fullName").value;
+  const fullName = document.getElementById("fullName").value;
   const phone = document.getElementById("phone").value;
-  const activity = document.getElementById("activity").value;
-  const subActivity = document.getElementById("subActivity").value;
+  const act = activity.value;
+  const sub = subActivity.value;
 
-  if (!fullName || phone.length !== 10 || !activity || !subActivity) {
+  if (!fullName || phone.length !== 10 || !act || !sub) {
     alert("กรุณากรอกข้อมูลให้ครบ");
     return;
   }
@@ -151,40 +154,45 @@ async function saveData() {
       pictureUrl: profileData.pictureUrl,
       fullName,
       phone,
-      activity,
-      subActivity
+      activity: act,
+      subActivity: sub
     })
   });
 
-  // 2️⃣ ส่งข้อความกลับ LINE
+  // 2️⃣ ส่งข้อความสรุปเข้า LINE
   if (liff.isInClient()) {
     await liff.sendMessages([{
       type: "text",
       text:
 `📋 สรุปการลงทะเบียน
-👤 ชื่อ: ${fullName}
-📞 เบอร์: ${phone}
-🎯 กิจกรรม: ${activity}
-📝 รายการ: ${subActivity}
+👤 ${fullName}
+📞 ${phone}
+🎯 ${act}
+📝 ${sub}
 
-✅ บันทึกเรียบร้อยแล้ว`
+✅ บันทึกเรียบร้อย`
     }]);
   }
 
-  // 3️⃣ แสดงหน้าสรุป
-  document.getElementById("summaryText").innerText =
-    `ชื่อ: ${fullName}\nกิจกรรม: ${activity} - ${subActivity}`;
+  // 3️⃣ หน้าสรุปเดิม
+  summaryText.innerText =
+    `ชื่อ: ${fullName}
+กิจกรรม: ${act}
+รายการ: ${sub}`;
 
-  document.getElementById("formBox").classList.add("hidden");
-  document.getElementById("summaryBox").classList.remove("hidden");
+  formBox.classList.add("hidden");
+  summaryBox.classList.remove("hidden");
 }
 
 function newForm() {
-  document.getElementById("formBox").classList.remove("hidden");
-  document.getElementById("summaryBox").classList.add("hidden");
-  document.getElementById("fullName").value = "";
-  document.getElementById("phone").value = "";
+  fullName.value = "";
+  phone.value = "";
+  activity.value = "";
+  subActivity.innerHTML = "";
+  summaryBox.classList.add("hidden");
+  formBox.classList.remove("hidden");
 }
+
 init();
 </script>
 
