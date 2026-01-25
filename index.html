@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>สำรองที่นั่ง</title>
+
+<title>สำรองที่นั่ง | LIFF v2.1</title>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -18,7 +19,7 @@
   .card {
     background: #fff;
     border-radius: 20px;
-    padding: 20px;
+    padding: 22px;
     max-width: 420px;
     margin: auto;
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
@@ -27,7 +28,7 @@
   h1 {
     text-align: center;
     font-size: 24px;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
     color: #6a1b9a;
   }
 
@@ -48,7 +49,7 @@
   }
 
   button {
-    margin-top: 20px;
+    margin-top: 22px;
     width: 100%;
     padding: 16px;
     font-size: 20px;
@@ -59,33 +60,26 @@
     cursor: pointer;
   }
 
-  button:disabled {
-    background: #aaa;
-  }
-
   .loading {
     text-align: center;
-    margin-top: 10px;
+    margin-top: 12px;
     font-size: 16px;
-    color: #555;
     display: none;
   }
 
-  /* === SUMMARY === */
   .summary {
     display: none;
     text-align: center;
   }
 
   .success-box {
-    background: linear-gradient(135deg, #81c784, #66bb6a);
+    background: linear-gradient(135deg, #66bb6a, #43a047);
     color: #fff;
-    padding: 18px;
-    border-radius: 16px;
+    padding: 20px;
+    border-radius: 18px;
     font-size: 20px;
     font-weight: bold;
-    margin-bottom: 14px;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    margin-bottom: 16px;
   }
 
   .summary p {
@@ -104,10 +98,10 @@
   <!-- FORM -->
   <div id="formSection">
     <label>ชื่อ-นามสกุล</label>
-    <input id="inputName" placeholder="กรอกชื่อ-นามสกุล">
+    <input id="inputName">
 
     <label>เบอร์โทรศัพท์</label>
-    <input id="phone" type="tel" maxlength="10" inputmode="numeric" placeholder="0xxxxxxxxx">
+    <input id="phone" type="tel" maxlength="10" inputmode="numeric">
 
     <label>กิจกรรม</label>
     <select id="activity" onchange="updateItems()">
@@ -115,7 +109,7 @@
     </select>
 
     <label>รายการ</label>
-    <select id="item">
+    <select id="item" onchange="setTravelTime()">
       <option value="">-- เลือกรายการ --</option>
     </select>
 
@@ -126,7 +120,7 @@
   <!-- SUMMARY -->
   <div class="summary" id="summarySection">
     <div class="success-box">
-      ✅ บันทึกสำเร็จ <br>
+      ✅ บันทึกสำเร็จ<br>
       รอข้อความยืนยันสำรองที่นั่ง
     </div>
 
@@ -134,6 +128,7 @@
     <p id="sPhone"></p>
     <p id="sActivity"></p>
     <p id="sItem"></p>
+    <p id="sTravel"></p>
 
     <button onclick="resetForm()">➕ เพิ่มข้อมูลใหม่</button>
   </div>
@@ -145,79 +140,78 @@ const LIFF_ID = "2008940385-hkDtMTsg";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
 let userData = {};
-let activityMap = {};
+let activityMap = {}; 
+// structure: { activity: [{ item, travelTime }] }
 
 async function initLIFF() {
   await liff.init({ liffId: LIFF_ID });
+  if (!liff.isLoggedIn()) return liff.login();
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
-
-  const profile = await liff.getProfile();
-  userData.userId = profile.userId;
-  userData.displayName = profile.displayName;
-  userData.profilename = profile.pictureUrl
-    ? "https://line.me/ti/p/~" + profile.userId
-    : "";
+  const p = await liff.getProfile();
+  userData = {
+    userId: p.userId,
+    displayName: p.displayName,
+    profilename: "https://line.me/ti/p/~" + p.userId
+  };
 
   loadActivities();
 }
 
 async function loadActivities() {
   const res = await fetch(GAS_URL + "?mode=activity");
-  const data = await res.json();
+  const rows = await res.json();
 
-  const activitySelect = document.getElementById("activity");
+  const actSel = document.getElementById("activity");
 
-  data.forEach(row => {
-    if (!activityMap[row.activity]) {
-      activityMap[row.activity] = [];
+  rows.forEach(r => {
+    if (!activityMap[r.activity]) {
+      activityMap[r.activity] = [];
       const opt = document.createElement("option");
-      opt.value = row.activity;
-      opt.textContent = row.activity;
-      activitySelect.appendChild(opt);
+      opt.value = r.activity;
+      opt.textContent = r.activity;
+      actSel.appendChild(opt);
     }
-    activityMap[row.activity].push(row.item);
+    activityMap[r.activity].push({
+      item: r.item,
+      travelTime: r.travelTime
+    });
   });
 }
 
 function updateItems() {
-  const activity = document.getElementById("activity").value;
-  const itemSelect = document.getElementById("item");
+  const act = activity.value;
+  item.innerHTML = `<option value="">-- เลือกรายการ --</option>`;
+  if (!activityMap[act]) return;
 
-  itemSelect.innerHTML = `<option value="">-- เลือกรายการ --</option>`;
-  if (!activityMap[activity]) return;
-
-  activityMap[activity].forEach(it => {
+  activityMap[act].forEach(o => {
     const opt = document.createElement("option");
-    opt.value = it;
-    opt.textContent = it;
-    itemSelect.appendChild(opt);
+    opt.value = o.item;
+    opt.textContent = o.item;
+    opt.dataset.travel = o.travelTime;
+    item.appendChild(opt);
   });
 }
 
-async function submitForm() {
-  const inputName = document.getElementById("inputName").value;
-  const phone = document.getElementById("phone").value;
-  const activity = document.getElementById("activity").value;
-  const item = document.getElementById("item").value;
+function setTravelTime() {
+  const sel = item.selectedOptions[0];
+  userData.travelTime = sel ? sel.dataset.travel : "";
+}
 
-  if (!inputName || !phone || !activity || !item) {
+async function submitForm() {
+  const payload = {
+    ...userData,
+    inputName: inputName.value,
+    phone: phone.value,
+    activity: activity.value,
+    item: item.value
+  };
+
+  if (!payload.inputName || !payload.phone || !payload.activity || !payload.item) {
     alert("กรุณากรอกข้อมูลให้ครบ");
     return;
   }
 
-  document.getElementById("loading").style.display = "block";
-
-  const payload = {
-    ...userData,
-    inputName,
-    phone,
-    activity,
-    item
-  };
+  loading.style.display = "block";
 
   await fetch(GAS_URL, {
     method: "POST",
@@ -225,13 +219,14 @@ async function submitForm() {
     mode: "no-cors"
   });
 
-  document.getElementById("formSection").style.display = "none";
-  document.getElementById("summarySection").style.display = "block";
+  formSection.style.display = "none";
+  summarySection.style.display = "block";
 
-  document.getElementById("sName").innerText = "👦 " + inputName;
-  document.getElementById("sPhone").innerText = "📞 " + phone;
-  document.getElementById("sActivity").innerText = "🎯 " + activity;
-  document.getElementById("sItem").innerText = "📌 " + item;
+  sName.innerText = "👦 " + payload.inputName;
+  sPhone.innerText = "📞 " + payload.phone;
+  sActivity.innerText = "🎯 " + payload.activity;
+  sItem.innerText = "📌 " + payload.item;
+  sTravel.innerText = "🕒 เวลาเดินทาง: " + userData.travelTime;
 }
 
 function resetForm() {
