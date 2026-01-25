@@ -31,9 +31,6 @@ body {
   height: 90px;
   border-radius: 50%;
 }
-.profile h3 {
-  margin: 8px 0 0;
-}
 label {
   font-weight: bold;
   margin-top: 12px;
@@ -53,15 +50,7 @@ button {
   border: none;
   margin-top: 18px;
 }
-button:active {
-  opacity: .85;
-}
-.summary {
-  display: none;
-}
-.summary p {
-  margin: 6px 0;
-}
+.summary { display:none; }
 </style>
 </head>
 
@@ -74,13 +63,13 @@ button:active {
   </div>
 
   <label>ชื่อ–นามสกุล</label>
-  <input id="fullname" placeholder="กรอกชื่อ–นามสกุล">
+  <input id="fullname">
 
   <label>เบอร์โทรศัพท์</label>
-  <input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="0XXXXXXXXX">
+  <input id="phone" type="tel" inputmode="numeric" maxlength="10">
 
   <label>กิจกรรม</label>
-  <select id="activity" onchange="loadItems()">
+  <select id="activity" onchange="updateItems()">
     <option value="">-- เลือกกิจกรรม --</option>
   </select>
 
@@ -106,7 +95,8 @@ const LIFF_ID = "2008940385-hkDtMTsg";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
 let profile = {};
-let activityData = {};
+let activityMap = {};
+let rawActivity = [];
 
 async function init() {
   await liff.init({ liffId: LIFF_ID });
@@ -119,15 +109,21 @@ async function init() {
   linePic.src = profile.pictureUrl;
   lineName.textContent = profile.displayName;
 
-  loadActivities();
+  loadActivityFromSheet();
 }
 
-async function loadActivities() {
-  const res = await fetch(GAS_URL + "?mode=activities");
-  activityData = await res.json();
+async function loadActivityFromSheet() {
+  const res = await fetch(GAS_URL + "?mode=activity");
+  rawActivity = await res.json();
+
+  activityMap = {};
+  rawActivity.forEach(r => {
+    if (!activityMap[r.activity]) activityMap[r.activity] = [];
+    activityMap[r.activity].push(r.item);
+  });
 
   activity.innerHTML = '<option value="">-- เลือกกิจกรรม --</option>';
-  Object.keys(activityData).forEach(a => {
+  Object.keys(activityMap).forEach(a => {
     const opt = document.createElement("option");
     opt.value = a;
     opt.textContent = a;
@@ -135,10 +131,9 @@ async function loadActivities() {
   });
 }
 
-function loadItems() {
+function updateItems() {
   item.innerHTML = '<option value="">-- เลือกรายการ --</option>';
-  const list = activityData[activity.value] || [];
-  list.forEach(i => {
+  (activityMap[activity.value] || []).forEach(i => {
     const opt = document.createElement("option");
     opt.value = i;
     opt.textContent = i;
@@ -155,22 +150,15 @@ async function saveData() {
     item: item.value
   };
 
-  try {
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
-    const result = await res.json();
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
 
-    if (result.success) {
-      showSummary(data);
-    } else {
-      alert("บันทึกไม่สำเร็จ");
-    }
-  } catch {
-    alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
-  }
+  const result = await res.json();
+  if (result.success) showSummary(data);
+  else alert("บันทึกไม่สำเร็จ");
 }
 
 function showSummary(d) {
@@ -185,8 +173,6 @@ function showSummary(d) {
 function resetForm() {
   summaryBox.style.display = "none";
   formBox.style.display = "block";
-  fullname.value = phone.value = "";
-  activity.selectedIndex = item.selectedIndex = 0;
 }
 
 window.onload = init;
