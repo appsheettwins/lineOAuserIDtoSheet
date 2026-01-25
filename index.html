@@ -71,9 +71,21 @@
     display: none;
   }
 
+  /* === SUMMARY === */
   .summary {
     display: none;
     text-align: center;
+  }
+
+  .success-box {
+    background: linear-gradient(135deg, #81c784, #66bb6a);
+    color: #fff;
+    padding: 18px;
+    border-radius: 16px;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 14px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
   }
 
   .summary p {
@@ -113,7 +125,11 @@
 
   <!-- SUMMARY -->
   <div class="summary" id="summarySection">
-    <h2>✅ บันทึกสำเร็จ</h2>
+    <div class="success-box">
+      ✅ บันทึกสำเร็จ <br>
+      รอข้อความยืนยันสำรองที่นั่ง
+    </div>
+
     <p id="sName"></p>
     <p id="sPhone"></p>
     <p id="sActivity"></p>
@@ -142,8 +158,6 @@ async function initLIFF() {
   const profile = await liff.getProfile();
   userData.userId = profile.userId;
   userData.displayName = profile.displayName;
-
-  // 🔹 เก็บลิงก์รูปโปรไฟล์ (ไม่แสดงในฟอร์ม)
   userData.profilename = profile.pictureUrl
     ? "https://line.me/ti/p/~" + profile.userId
     : "";
@@ -214,7 +228,7 @@ async function submitForm() {
   document.getElementById("formSection").style.display = "none";
   document.getElementById("summarySection").style.display = "block";
 
-  document.getElementById("sName").innerText = "👤 " + inputName;
+  document.getElementById("sName").innerText = "👦 " + inputName;
   document.getElementById("sPhone").innerText = "📞 " + phone;
   document.getElementById("sActivity").innerText = "🎯 " + activity;
   document.getElementById("sItem").innerText = "📌 " + item;
