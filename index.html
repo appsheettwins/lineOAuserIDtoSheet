@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>LIFF Form v1.4</title>
+<title>LIFF Form</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -20,8 +20,13 @@ body{
   padding:20px;
   box-shadow:0 15px 40px rgba(0,0,0,.2);
 }
-img{width:90px;border-radius:50%;display:block;margin:auto}
-h3{text-align:center}
+img{
+  width:90px;
+  border-radius:50%;
+  display:block;
+  margin:auto;
+}
+h3{text-align:center;margin:10px 0}
 label{display:block;margin-top:12px;font-weight:600}
 input,select{
   width:100%;
@@ -29,6 +34,7 @@ input,select{
   margin-top:6px;
   border-radius:12px;
   border:1px solid #ddd;
+  font-size:15px;
 }
 button{
   width:100%;
@@ -40,26 +46,26 @@ button{
   background:linear-gradient(135deg,#22c55e,#16a34a);
   color:#fff;
 }
-button:disabled{
-  opacity:.6;
-}
-#loading{
-  display:none;
-  text-align:center;
-  margin-top:15px;
-}
-#summary{display:none;text-align:center}
+button:disabled{opacity:.6}
+#loading{text-align:center;display:none;margin-top:15px}
 .spinner{
-  width:36px;
-  height:36px;
+  width:36px;height:36px;
   border:4px solid #ddd;
   border-top:4px solid #22c55e;
   border-radius:50%;
   margin:auto;
   animation:spin 1s linear infinite;
 }
-@keyframes spin{
-  to{transform:rotate(360deg)}
+@keyframes spin{to{transform:rotate(360deg)}}
+#summary{display:none;text-align:center}
+#addFriend{display:none;text-align:center}
+.addBtn{
+  background:#06c755;
+  color:#fff;
+  border:none;
+  padding:14px;
+  border-radius:14px;
+  font-size:16px;
 }
 </style>
 </head>
@@ -67,15 +73,25 @@ button:disabled{
 <body>
 <div class="card">
 
+<!-- 🔴 ADD FRIEND -->
+<div id="addFriend">
+  <h3>⚠️ กรุณาเพิ่มเพื่อน LINE OA</h3>
+  <p>เพื่อรับข้อความยืนยันหลังบันทึกข้อมูล</p>
+  <a href="https://line.me/R/ti/p/@YOUR_OA_ID" target="_blank">
+    <button class="addBtn">➕ เพิ่มเพื่อน LINE</button>
+  </a>
+</div>
+
+<!-- 🟢 FORM -->
 <div id="form">
   <img id="pic">
   <h3 id="lineName"></h3>
 
   <label>ชื่อ-นามสกุล</label>
-  <input id="inputName">
+  <input id="inputName" placeholder="กรอกชื่อ-นามสกุล">
 
   <label>เบอร์โทร</label>
-  <input id="phone" type="tel" maxlength="10">
+  <input id="phone" type="tel" maxlength="10" placeholder="0XXXXXXXXX">
 
   <label>กิจกรรม</label>
   <select id="activity" onchange="updateItems()">
@@ -95,6 +111,7 @@ button:disabled{
   </div>
 </div>
 
+<!-- ✅ SUMMARY -->
 <div id="summary">
   <h3>✅ บันทึกสำเร็จ</h3>
   <p id="sum"></p>
@@ -105,15 +122,24 @@ button:disabled{
 
 <script>
 const LIFF_ID = "2008940385-hkDtMTsg";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyygVxywjy4MKAcxTmr7Idu_LPtK_AECsomy4CL_mSzom5XBZdmE8P-xDttAfAhcyxp/exec";
 
-let profile={}, activityMap={};
+let profile = {};
+let activityMap = {};
 
 async function init(){
   await liff.init({ liffId: LIFF_ID });
   if(!liff.isLoggedIn()) liff.login();
 
   profile = await liff.getProfile();
+
+  const friend = await liff.getFriendship();
+  if (!friend.friendFlag) {
+    form.style.display = "none";
+    addFriend.style.display = "block";
+    return;
+  }
+
   pic.src = profile.pictureUrl;
   lineName.innerText = profile.displayName;
 
@@ -137,7 +163,7 @@ async function loadActivities(){
 
 function updateItems(){
   item.innerHTML = `<option value="">-- เลือกรายการ --</option>`;
-  (activityMap[activity.value]||[]).forEach(i=>{
+  (activityMap[activity.value] || []).forEach(i=>{
     item.innerHTML += `<option value="${i}">${i}</option>`;
   });
 }
@@ -157,33 +183,29 @@ async function save(){
   };
 
   try {
-    const res = await fetch(GAS_URL, {
+    await fetch(GAS_URL, {
       method: "POST",
-      mode: "no-cors",              // ⭐ สำคัญมากสำหรับ LIFF
-      headers: {
-        "Content-Type": "application/json"
-      },
+      mode: "no-cors",
+      headers: {"Content-Type":"application/json"},
       body: JSON.stringify(payload)
     });
 
-    // LIFF no-cors จะอ่าน response ไม่ได้ → ถือว่าสำเร็จ
     showSummary(payload);
-
-  } catch (err) {
+  } catch(e) {
     alert("❌ บันทึกไม่สำเร็จ");
     saveBtn.disabled = false;
     loading.style.display = "none";
   }
 }
 
-function showSummary(data){
-  form.style.display="none";
-  summary.style.display="block";
+function showSummary(d){
+  form.style.display = "none";
+  summary.style.display = "block";
   sum.innerHTML = `
-    👤 ${data.inputName}<br>
-    📞 ${data.phone}<br>
-    🎯 ${data.activity}<br>
-    📌 ${data.item}
+    👤 ${d.inputName}<br>
+    📞 ${d.phone}<br>
+    🎯 ${d.activity}<br>
+    📌 ${d.item}
   `;
 }
 
