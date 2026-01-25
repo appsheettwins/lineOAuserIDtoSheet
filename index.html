@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>LIFF Form</title>
+<title>LIFF Form v1.4</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -58,31 +58,12 @@ button:disabled{opacity:.6}
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 #summary{display:none;text-align:center}
-#addFriend{display:none;text-align:center}
-.addBtn{
-  background:#06c755;
-  color:#fff;
-  border:none;
-  padding:14px;
-  border-radius:14px;
-  font-size:16px;
-}
 </style>
 </head>
 
 <body>
 <div class="card">
 
-<!-- 🔴 ADD FRIEND -->
-<div id="addFriend">
-  <h3>⚠️ กรุณาเพิ่มเพื่อน LINE OA</h3>
-  <p>เพื่อรับข้อความยืนยันหลังบันทึกข้อมูล</p>
-  <a href="https://line.me/R/ti/p/@YOUR_OA_ID" target="_blank">
-    <button class="addBtn">➕ เพิ่มเพื่อน LINE</button>
-  </a>
-</div>
-
-<!-- 🟢 FORM -->
 <div id="form">
   <img id="pic">
   <h3 id="lineName"></h3>
@@ -111,7 +92,6 @@ button:disabled{opacity:.6}
   </div>
 </div>
 
-<!-- ✅ SUMMARY -->
 <div id="summary">
   <h3>✅ บันทึกสำเร็จ</h3>
   <p id="sum"></p>
@@ -122,7 +102,7 @@ button:disabled{opacity:.6}
 
 <script>
 const LIFF_ID = "2008940385-hkDtMTsg";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyygVxywjy4MKAcxTmr7Idu_LPtK_AECsomy4CL_mSzom5XBZdmE8P-xDttAfAhcyxp/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
 let profile = {};
 let activityMap = {};
@@ -132,14 +112,6 @@ async function init(){
   if(!liff.isLoggedIn()) liff.login();
 
   profile = await liff.getProfile();
-
-  const friend = await liff.getFriendship();
-  if (!friend.friendFlag) {
-    form.style.display = "none";
-    addFriend.style.display = "block";
-    return;
-  }
-
   pic.src = profile.pictureUrl;
   lineName.innerText = profile.displayName;
 
@@ -185,12 +157,13 @@ async function save(){
   try {
     await fetch(GAS_URL, {
       method: "POST",
-      mode: "no-cors",
+      mode: "no-cors",   // ⭐ KEY POINT สำหรับ LIFF
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify(payload)
     });
 
     showSummary(payload);
+
   } catch(e) {
     alert("❌ บันทึกไม่สำเร็จ");
     saveBtn.disabled = false;
