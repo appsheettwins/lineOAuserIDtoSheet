@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>LIFF Form</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
@@ -20,29 +19,23 @@ body {
   padding: 16px;
 }
 .card {
-  background: #ffffff;
+  background: #fff;
   border-radius: 18px;
   padding: 20px;
   box-shadow: 0 15px 30px rgba(0,0,0,.15);
 }
 .profile {
   text-align: center;
-  margin-bottom: 10px;
 }
 .profile img {
   width: 96px;
-  height: 96px;
   border-radius: 50%;
-}
-.profile h3 {
-  margin: 8px 0 0;
-  color: #333;
 }
 h2 {
   text-align: center;
   color: #06c755;
 }
-input, select {
+input, select, button {
   width: 100%;
   padding: 14px;
   margin-top: 12px;
@@ -51,26 +44,15 @@ input, select {
   font-size: 16px;
 }
 button {
-  width: 100%;
-  margin-top: 16px;
-  padding: 14px;
-  border-radius: 14px;
-  border: none;
-  font-size: 18px;
-  font-weight: bold;
   background: #06c755;
   color: #fff;
+  font-weight: bold;
+  border: none;
 }
 button.secondary {
   background: #00bfa5;
 }
-.hidden {
-  display: none;
-}
-.summary p {
-  font-size: 16px;
-  margin: 10px 0;
-}
+.hidden { display: none; }
 </style>
 </head>
 
@@ -78,7 +60,6 @@ button.secondary {
 
 <div class="container">
 
-<!-- ===== FORM ===== -->
 <div class="card" id="formBox">
   <div class="profile">
     <img id="picture">
@@ -89,37 +70,34 @@ button.secondary {
 
   <input id="fullName" placeholder="ชื่อ - นามสกุล">
 
-  <!-- 📞 เบอร์โทร (แก้ไขตรงนี้) -->
   <input
     id="phone"
     type="tel"
     inputmode="numeric"
-    placeholder="เบอร์โทรศัพท์ (10 หลัก)"
     maxlength="10"
-    pattern="[0-9]{10}"
-    oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,10)"
+    placeholder="เบอร์โทรศัพท์ (10 หลัก)"
+    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"
   >
 
-  <select id="activity">
+  <!-- 🔽 กิจกรรม -->
+  <select id="activity" onchange="updateItems()">
     <option value="">เลือกกิจกรรม</option>
-    <option>ธรรมยาตรา</option>
-    <option>จุดประทีป</option>
-    <option>ตักบาตร</option>
-    <option>ทอดผ้าป่า</option>
+  </select>
+
+  <!-- 🔽 รายการ -->
+  <select id="item">
+    <option value="">เลือกรายการ</option>
   </select>
 
   <button onclick="saveData()">บันทึกข้อมูล</button>
 </div>
 
-<!-- ===== SUMMARY ===== -->
 <div class="card hidden" id="summaryBox">
   <h2>สรุปข้อมูล</h2>
-
-  <div class="summary">
-    <p><b>ชื่อ:</b> <span id="sName"></span></p>
-    <p><b>เบอร์:</b> <span id="sPhone"></span></p>
-    <p><b>กิจกรรม:</b> <span id="sActivity"></span></p>
-  </div>
+  <p><b>ชื่อ:</b> <span id="sName"></span></p>
+  <p><b>เบอร์:</b> <span id="sPhone"></span></p>
+  <p><b>กิจกรรม:</b> <span id="sActivity"></span></p>
+  <p><b>รายการ:</b> <span id="sItem"></span></p>
 
   <button class="secondary" onclick="newForm()">เพิ่มข้อมูลใหม่</button>
 </div>
@@ -131,29 +109,60 @@ const LIFF_ID = "2008940385-hkDtMTsg";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
 let profileData = {};
+let activityData = {};
 
 async function init() {
   await liff.init({ liffId: LIFF_ID });
-
   if (!liff.isLoggedIn()) {
     liff.login();
     return;
   }
 
-  const profile = await liff.getProfile();
-  profileData = profile;
+  profileData = await liff.getProfile();
+  document.getElementById("picture").src = profileData.pictureUrl;
+  document.getElementById("lineName").textContent = profileData.displayName;
 
-  document.getElementById("picture").src = profile.pictureUrl;
-  document.getElementById("lineName").textContent = profile.displayName;
+  loadActivities();
+}
+
+async function loadActivities() {
+  const res = await fetch(GAS_URL + "?action=activities");
+  activityData = await res.json();
+
+  const activitySelect = document.getElementById("activity");
+  activitySelect.innerHTML = '<option value="">เลือกกิจกรรม</option>';
+
+  Object.keys(activityData).forEach(act => {
+    const opt = document.createElement("option");
+    opt.value = act;
+    opt.textContent = act;
+    activitySelect.appendChild(opt);
+  });
+}
+
+function updateItems() {
+  const activity = document.getElementById("activity").value;
+  const itemSelect = document.getElementById("item");
+  itemSelect.innerHTML = '<option value="">เลือกรายการ</option>';
+
+  if (!activityData[activity]) return;
+
+  activityData[activity].forEach(item => {
+    const opt = document.createElement("option");
+    opt.value = item;
+    opt.textContent = item;
+    itemSelect.appendChild(opt);
+  });
 }
 
 function saveData() {
-  const fullName = document.getElementById("fullName").value;
-  const phone = document.getElementById("phone").value;
+  const fullName = fullNameInput.value;
+  const phone = phoneInput.value;
   const activity = document.getElementById("activity").value;
+  const item = document.getElementById("item").value;
 
-  if (!fullName || phone.length !== 10 || !activity) {
-    alert("กรุณากรอกข้อมูลให้ครบ และเบอร์โทรต้อง 10 หลัก");
+  if (!fullName || phone.length !== 10 || !activity || !item) {
+    alert("กรุณากรอกข้อมูลให้ครบ");
     return;
   }
 
@@ -165,27 +174,26 @@ function saveData() {
       userId: profileData.userId,
       lineName: profileData.displayName,
       pictureUrl: profileData.pictureUrl,
-      fullName: fullName,
-      phone: phone,
-      activity: activity
+      fullName,
+      phone,
+      activity,
+      item
     })
   });
 
-  document.getElementById("sName").textContent = fullName;
-  document.getElementById("sPhone").textContent = phone;
-  document.getElementById("sActivity").textContent = activity;
+  sName.textContent = fullName;
+  sPhone.textContent = phone;
+  sActivity.textContent = activity;
+  sItem.textContent = item;
 
-  document.getElementById("formBox").classList.add("hidden");
-  document.getElementById("summaryBox").classList.remove("hidden");
+  formBox.classList.add("hidden");
+  summaryBox.classList.remove("hidden");
 }
 
 function newForm() {
-  document.getElementById("fullName").value = "";
-  document.getElementById("phone").value = "";
-  document.getElementById("activity").value = "";
-
-  document.getElementById("summaryBox").classList.add("hidden");
-  document.getElementById("formBox").classList.remove("hidden");
+  formBox.reset?.();
+  summaryBox.classList.add("hidden");
+  formBox.classList.remove("hidden");
 }
 
 init();
