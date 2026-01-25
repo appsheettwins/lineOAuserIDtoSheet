@@ -105,47 +105,53 @@ async function init() {
   }
 
   profile = await liff.getProfile();
-  linePic.src = profile.pictureUrl;
   lineName.textContent = profile.displayName;
+  linePic.src = profile.pictureUrl;
 
-  loadActivities();
+  loadActivity();
 }
 
-async function loadActivities() {
+async function loadActivity() {
   const res = await fetch(GAS_URL + "?mode=activity");
   const data = await res.json();
 
   activityMap = {};
   data.forEach(r => {
-    if (!activityMap[r.activity]) activityMap[r.activity] = [];
+    if (!activityMap[r.activity]) {
+      activityMap[r.activity] = [];
+    }
     activityMap[r.activity].push(r.item);
   });
 
   activity.innerHTML = '<option value="">-- เลือกกิจกรรม --</option>';
   Object.keys(activityMap).forEach(a => {
-    const opt = document.createElement("option");
-    opt.value = a;
-    opt.textContent = a;
-    activity.appendChild(opt);
+    const op = document.createElement("option");
+    op.value = a;
+    op.textContent = a;
+    activity.appendChild(op);
   });
 }
 
 function updateItems() {
   item.innerHTML = '<option value="">-- เลือกรายการ --</option>';
-  (activityMap[activity.value] || []).forEach(i => {
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = i;
-    item.appendChild(opt);
+
+  const selected = activity.value;
+  if (!activityMap[selected]) return;
+
+  activityMap[selected].forEach(i => {
+    const op = document.createElement("option");
+    op.value = i;
+    op.textContent = i;
+    item.appendChild(op);
   });
 }
 
-async function saveData() {
+async function saveForm() {
   const payload = {
     userId: profile.userId,
     displayName: profile.displayName,
+    profilename: profile.displayName,
     inputName: fullname.value,
-    fullname: fullname.value,
     phone: phone.value,
     activity: activity.value,
     item: item.value
@@ -157,15 +163,16 @@ async function saveData() {
     body: JSON.stringify(payload)
   });
 
-  const result = await res.json();
-  if (result.success) showSummary(payload);
+  const r = await res.json();
+  if (r.success) showSummary(payload);
   else alert("บันทึกไม่สำเร็จ");
 }
 
 function showSummary(d) {
   formBox.style.display = "none";
   summaryBox.style.display = "block";
-  s_name.textContent = d.fullname;
+
+  s_name.textContent = d.inputName;
   s_phone.textContent = d.phone;
   s_activity.textContent = d.activity;
   s_item.textContent = d.item;
@@ -178,6 +185,7 @@ function resetForm() {
 
 window.onload = init;
 </script>
+
 
 
 </body>
