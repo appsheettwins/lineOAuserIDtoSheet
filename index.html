@@ -5,13 +5,14 @@
 <title>ลงทะเบียนกิจกรรม</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- LIFF SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
 body {
   margin: 0;
   background: #f3f4f6;
-  font-family: system-ui;
+  font-family: system-ui, -apple-system;
 }
 
 .container {
@@ -22,7 +23,7 @@ body {
 
 .card {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 20px;
   box-shadow: 0 10px 25px rgba(0,0,0,.08);
 }
@@ -30,6 +31,18 @@ body {
 h2 {
   text-align: center;
   margin-bottom: 16px;
+}
+
+.profile {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.profile img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  margin-bottom: 8px;
 }
 
 label {
@@ -64,25 +77,31 @@ button.secondary {
 }
 
 .hidden { display: none; }
-.summary p { margin: 8px 0; }
+
+.summary p {
+  margin: 10px 0;
+  font-size: 16px;
+}
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<!-- PAGE 1 FORM -->
+<!-- FORM PAGE -->
 <div class="card" id="formPage">
   <h2>ลงทะเบียนกิจกรรม</h2>
 
-  <label>ชื่อผู้ลงทะเบียน</label>
-  <input id="name" readonly>
+  <div class="profile">
+    <img id="profileImage">
+    <div id="profileName"></div>
+  </div>
 
   <label>เบอร์โทรศัพท์</label>
-  <input id="phone" type="tel" placeholder="เช่น 0812345678">
+  <input id="phoneInput" type="tel" placeholder="0812345678">
 
   <label>เลือกกิจกรรม</label>
-  <select id="activity">
+  <select id="activitySelect">
     <option value="">-- เลือกกิจกรรม --</option>
     <option>ธรรมยาตรา</option>
     <option>จุดประทีป</option>
@@ -93,7 +112,7 @@ button.secondary {
   <button onclick="showSummary()">บันทึกข้อมูล</button>
 </div>
 
-<!-- PAGE 2 SUMMARY -->
+<!-- SUMMARY PAGE -->
 <div class="card hidden" id="summaryPage">
   <h2>สรุปข้อมูล</h2>
 
@@ -114,57 +133,66 @@ const LIFF_ID = "2008940385-hkDtMTsg";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
 let userId = "";
+let displayName = "";
 
 async function init() {
   if (!liff.isInClient()) {
-    alert("กรุณาเปิดผ่าน LINE");
+    alert("กรุณาเปิดผ่าน LINE เท่านั้น");
     return;
   }
 
   await liff.init({ liffId: LIFF_ID });
+
   if (!liff.isLoggedIn()) {
     liff.login();
     return;
   }
 
   const profile = await liff.getProfile();
-  document.getElementById("name").value = profile.displayName;
+
   userId = profile.userId;
+  displayName = profile.displayName;
+
+  document.getElementById("profileName").textContent = displayName;
+  document.getElementById("profileImage").src = profile.pictureUrl;
 }
 
 function showSummary() {
-  const phone = phone.value;
-  const activity = document.getElementById("activity").value;
+  const phone = document.getElementById("phoneInput").value.trim();
+  const activity = document.getElementById("activitySelect").value;
 
   if (!phone || !activity) {
     alert("กรุณากรอกข้อมูลให้ครบ");
     return;
   }
 
-  document.getElementById("s_name").textContent = name.value;
+  document.getElementById("s_name").textContent = displayName;
   document.getElementById("s_phone").textContent = phone;
   document.getElementById("s_activity").textContent = activity;
 
-  formPage.classList.add("hidden");
-  summaryPage.classList.remove("hidden");
+  document.getElementById("formPage").classList.add("hidden");
+  document.getElementById("summaryPage").classList.remove("hidden");
 }
 
 function resetForm() {
-  phone.value = "";
-  activity.value = "";
-  summaryPage.classList.add("hidden");
-  formPage.classList.remove("hidden");
+  document.getElementById("phoneInput").value = "";
+  document.getElementById("activitySelect").value = "";
+  document.getElementById("summaryPage").classList.add("hidden");
+  document.getElementById("formPage").classList.remove("hidden");
 }
 
 function submitData() {
+  const phone = document.getElementById("phoneInput").value;
+  const activity = document.getElementById("activitySelect").value;
+
   fetch(GAS_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       userId: userId,
-      displayName: name.value,
-      phone: phone.value,
-      activity: activity.value
+      displayName: displayName,
+      phone: phone,
+      activity: activity
     })
   })
   .then(() => {
