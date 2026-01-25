@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>สำรองที่นั่ง | LIFF v2.1.2</title>
+<title>สำรองที่นั่ง | LIFF v2.1.3</title>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -84,7 +84,6 @@
 
 <h1>สำรองที่นั่งร่วมกิจกรรมธรรมยาตรา</h1>
 
-<!-- FORM -->
 <div id="formSection">
   <label>ชื่อ-นามสกุล</label>
   <input id="inputName">
@@ -106,7 +105,6 @@
   <div class="loading" id="loading">⏳ กำลังบันทึกข้อมูล...</div>
 </div>
 
-<!-- SUMMARY -->
 <div class="summary" id="summarySection">
   <div class="success-box">
     ✅ บันทึกสำเร็จ<br>
@@ -148,20 +146,24 @@ async function initLIFF() {
 
 async function loadActivities() {
   const res = await fetch(GAS_URL + "?mode=activity");
-  const rows = await res.json();
+  const rows = await res.json(); // ⬅️ เป็น array ล้วน
 
   rows.forEach(r => {
-    if (!activityMap[r.activity]) {
-      activityMap[r.activity] = [];
+    const activityName = r[0];   // คอลัม A
+    const itemName = r[1];       // คอลัม B
+    const travelTime = r[2];     // คอลัม C
+
+    if (!activityMap[activityName]) {
+      activityMap[activityName] = [];
       const opt = document.createElement("option");
-      opt.value = r.activity;
-      opt.textContent = r.activity;
+      opt.value = activityName;
+      opt.textContent = activityName;
       activity.appendChild(opt);
     }
 
-    activityMap[r.activity].push({
-      item: r.item,
-      travelTime: r.travelTime   // ✅ ดึงจากคอลัม C
+    activityMap[activityName].push({
+      item: itemName,
+      travelTime: travelTime
     });
   });
 }
@@ -170,8 +172,7 @@ function updateItems() {
   item.innerHTML = `<option value="">-- เลือกรายการ --</option>`;
   selectedTravelTime = "";
 
-  const list = activityMap[activity.value] || [];
-  list.forEach(o => {
+  (activityMap[activity.value] || []).forEach(o => {
     const opt = document.createElement("option");
     opt.value = o.item;
     opt.textContent = o.item;
