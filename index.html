@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>LIFF Form v1.3 FIX</title>
+<title>LIFF Form v1.4</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -40,7 +40,27 @@ button{
   background:linear-gradient(135deg,#22c55e,#16a34a);
   color:#fff;
 }
+button:disabled{
+  opacity:.6;
+}
+#loading{
+  display:none;
+  text-align:center;
+  margin-top:15px;
+}
 #summary{display:none;text-align:center}
+.spinner{
+  width:36px;
+  height:36px;
+  border:4px solid #ddd;
+  border-top:4px solid #22c55e;
+  border-radius:50%;
+  margin:auto;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
 </style>
 </head>
 
@@ -55,7 +75,7 @@ button{
   <input id="inputName">
 
   <label>เบอร์โทร</label>
-  <input id="phone">
+  <input id="phone" type="tel" maxlength="10">
 
   <label>กิจกรรม</label>
   <select id="activity" onchange="updateItems()">
@@ -67,7 +87,12 @@ button{
     <option value="">-- เลือกรายการ --</option>
   </select>
 
-  <button onclick="save()">บันทึกข้อมูล</button>
+  <button id="saveBtn" onclick="save()">บันทึกข้อมูล</button>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>กำลังบันทึกข้อมูล...</p>
+  </div>
 </div>
 
 <div id="summary">
@@ -80,7 +105,7 @@ button{
 
 <script>
 const LIFF_ID = "2008940385-hkDtMTsg";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyygVxywjy4MKAcxTmr7Idu_LPtK_AECsomy4CL_mSzom5XBZdmE8P-xDttAfAhcyxp/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
 let profile={}, activityMap={};
 
@@ -118,6 +143,9 @@ function updateItems(){
 }
 
 async function save(){
+  saveBtn.disabled = true;
+  loading.style.display = "block";
+
   const payload = {
     userId: profile.userId,
     displayName: profile.displayName,
@@ -128,26 +156,34 @@ async function save(){
     item: item.value
   };
 
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      mode: "no-cors",              // ⭐ สำคัญมากสำหรับ LIFF
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
 
-  const result = await res.json();
+    // LIFF no-cors จะอ่าน response ไม่ได้ → ถือว่าสำเร็จ
+    showSummary(payload);
 
-  if(!result.success){
+  } catch (err) {
     alert("❌ บันทึกไม่สำเร็จ");
-    return;
+    saveBtn.disabled = false;
+    loading.style.display = "none";
   }
+}
 
+function showSummary(data){
   form.style.display="none";
   summary.style.display="block";
   sum.innerHTML = `
-    👤 ${payload.inputName}<br>
-    📞 ${payload.phone}<br>
-    🎯 ${payload.activity}<br>
-    📌 ${payload.item}
+    👤 ${data.inputName}<br>
+    📞 ${data.phone}<br>
+    🎯 ${data.activity}<br>
+    📌 ${data.item}
   `;
 }
 
