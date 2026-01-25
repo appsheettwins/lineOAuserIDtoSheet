@@ -22,7 +22,7 @@
 <p id="name"></p>
 
 <script>
-  const LIFF_ID = "PUT_YOUR_LIFF_ID";
+  const LIFF_ID = "2008940385-hkDtMTsg";
   const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
   async function init() {
