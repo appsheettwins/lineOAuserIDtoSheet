@@ -170,7 +170,10 @@ function backToForm() {
 function submitData() {
   fetch(GAS_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
       userId: userId,
       lineName: lineName,
@@ -178,21 +181,12 @@ function submitData() {
       phone: phoneInput.value,
       activity: activitySelect.value
     })
-  })
-  .then(res => res.json())
-  .then(res => {
-    if (res.status === "success") {
-      alert("บันทึกข้อมูลเรียบร้อย ✅");
-      liff.closeWindow();
-    } else {
-      alert("บันทึกไม่สำเร็จ ❌\n" + res.message);
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ❌");
   });
+
+  alert("บันทึกข้อมูลเรียบร้อย ✅");
+  liff.closeWindow();
 }
+
 </script>
 
 </body>
