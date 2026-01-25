@@ -5,58 +5,44 @@
 <title>ลงทะเบียนกิจกรรม</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- LIFF SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
 body {
   margin: 0;
   background: #f3f4f6;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  font-family: system-ui;
 }
-
 .container {
   max-width: 420px;
   margin: auto;
   padding: 16px;
 }
-
 .card {
-  background: #ffffff;
+  background: #fff;
   border-radius: 18px;
   padding: 20px;
   box-shadow: 0 10px 25px rgba(0,0,0,.08);
 }
-
-h2 {
-  text-align: center;
-  margin-bottom: 16px;
-}
-
+h2 { text-align: center; }
 .profile {
   text-align: center;
   margin-bottom: 16px;
 }
-
 .profile img {
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 8px;
 }
-
 .profile-name {
   font-weight: bold;
-  font-size: 16px;
+  margin-top: 6px;
 }
-
 label {
   display: block;
   margin-top: 14px;
   font-weight: 600;
 }
-
 input, select {
   width: 100%;
   padding: 12px;
@@ -65,9 +51,8 @@ input, select {
   margin-top: 6px;
   font-size: 16px;
 }
-
 button {
-  margin-top: 22px;
+  margin-top: 20px;
   width: 100%;
   padding: 14px;
   border-radius: 14px;
@@ -77,33 +62,28 @@ button {
   font-size: 18px;
   font-weight: bold;
 }
-
 button.secondary {
   background: #64748b;
 }
-
-.hidden {
-  display: none;
-}
-
-.summary p {
-  font-size: 16px;
-  margin: 10px 0;
-}
+.hidden { display: none; }
+.summary p { margin: 10px 0; }
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<!-- PAGE 1 -->
+<!-- FORM -->
 <div class="card" id="pageForm">
   <h2>ลงทะเบียนกิจกรรม</h2>
 
   <div class="profile">
-    <img id="profileImage" src="">
-    <div class="profile-name" id="profileName">กำลังโหลดข้อมูล...</div>
+    <img id="profileImage">
+    <div class="profile-name" id="lineName">กำลังโหลด...</div>
   </div>
+
+  <label>ชื่อผู้ลงทะเบียน</label>
+  <input id="inputName" placeholder="กรอกชื่อ-นามสกุล">
 
   <label>เบอร์โทรศัพท์</label>
   <input id="phoneInput" type="tel" placeholder="0812345678">
@@ -111,115 +91,106 @@ button.secondary {
   <label>เลือกกิจกรรม</label>
   <select id="activitySelect">
     <option value="">-- เลือกกิจกรรม --</option>
-    <option value="ธรรมยาตรา">ธรรมยาตรา</option>
-    <option value="จุดประทีป">จุดประทีป</option>
-    <option value="ตักบาตร">ตักบาตร</option>
-    <option value="ทอดผ้าป่า">ทอดผ้าป่า</option>
+    <option>ธรรมยาตรา</option>
+    <option>จุดประทีป</option>
+    <option>ตักบาตร</option>
+    <option>ทอดผ้าป่า</option>
   </select>
 
   <button type="button" onclick="goSummary()">บันทึกข้อมูล</button>
 </div>
 
-<!-- PAGE 2 -->
+<!-- SUMMARY -->
 <div class="card hidden" id="pageSummary">
   <h2>สรุปข้อมูล</h2>
-
   <div class="summary">
-    <p><b>ชื่อ:</b> <span id="sumName"></span></p>
-    <p><b>เบอร์:</b> <span id="sumPhone"></span></p>
-    <p><b>กิจกรรม:</b> <span id="sumActivity"></span></p>
+    <p><b>LINE:</b> <span id="s_line"></span></p>
+    <p><b>ชื่อ:</b> <span id="s_name"></span></p>
+    <p><b>เบอร์:</b> <span id="s_phone"></span></p>
+    <p><b>กิจกรรม:</b> <span id="s_activity"></span></p>
   </div>
 
-  <button type="button" onclick="submitData()">ยืนยันบันทึก</button>
-  <button type="button" class="secondary" onclick="backToForm()">เพิ่มข้อมูลใหม่</button>
+  <button onclick="submitData()">ยืนยันบันทึก</button>
+  <button class="secondary" onclick="backToForm()">เพิ่มข้อมูลใหม่</button>
 </div>
 
 </div>
 
 <script>
-/* ================= CONFIG ================= */
 const LIFF_ID = "2008940385-hkDtMTsg";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
-/* ================= GLOBAL ================= */
-let gUserId = "";
-let gDisplayName = "";
+let userId = "";
+let lineName = "";
 
-/* ================= INIT ================= */
-window.onload = async function () {
-
+window.onload = async () => {
   if (!liff.isInClient()) {
-    alert("❌ กรุณาเปิดผ่าน LINE เท่านั้น");
+    alert("กรุณาเปิดผ่าน LINE");
     return;
   }
 
-  try {
-    await liff.init({ liffId: LIFF_ID });
-
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
-
-    const profile = await liff.getProfile();
-
-    gUserId = profile.userId;
-    gDisplayName = profile.displayName;
-
-    document.getElementById("profileName").textContent = profile.displayName;
-    document.getElementById("profileImage").src = profile.pictureUrl;
-
-  } catch (err) {
-    console.error(err);
-    alert("เกิดข้อผิดพลาดในการเชื่อมต่อ LINE");
+  await liff.init({ liffId: LIFF_ID });
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
   }
+
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+  lineName = profile.displayName;
+
+  document.getElementById("lineName").textContent = lineName;
+  document.getElementById("profileImage").src = profile.pictureUrl;
 };
 
-/* ================= FORM ================= */
 function goSummary() {
+  const inputName = document.getElementById("inputName").value.trim();
   const phone = document.getElementById("phoneInput").value.trim();
   const activity = document.getElementById("activitySelect").value;
 
-  if (phone === "" || activity === "") {
+  if (!inputName || !phone || !activity) {
     alert("กรุณากรอกข้อมูลให้ครบ");
     return;
   }
 
-  document.getElementById("sumName").textContent = gDisplayName;
-  document.getElementById("sumPhone").textContent = phone;
-  document.getElementById("sumActivity").textContent = activity;
+  s_line.textContent = lineName;
+  s_name.textContent = inputName;
+  s_phone.textContent = phone;
+  s_activity.textContent = activity;
 
-  document.getElementById("pageForm").classList.add("hidden");
-  document.getElementById("pageSummary").classList.remove("hidden");
+  pageForm.classList.add("hidden");
+  pageSummary.classList.remove("hidden");
 }
 
 function backToForm() {
-  document.getElementById("pageSummary").classList.add("hidden");
-  document.getElementById("pageForm").classList.remove("hidden");
+  pageSummary.classList.add("hidden");
+  pageForm.classList.remove("hidden");
 }
 
-/* ================= SUBMIT ================= */
 function submitData() {
-  const phone = document.getElementById("phoneInput").value.trim();
-  const activity = document.getElementById("activitySelect").value;
-
   fetch(GAS_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      userId: gUserId,
-      displayName: gDisplayName,
-      phone: phone,
-      activity: activity
+      userId: userId,
+      lineName: lineName,
+      inputName: inputName.value,
+      phone: phoneInput.value,
+      activity: activitySelect.value
     })
   })
-  .then(() => {
-    alert("บันทึกข้อมูลเรียบร้อย ✅");
-    liff.closeWindow();
+  .then(res => res.json())
+  .then(res => {
+    if (res.status === "success") {
+      alert("บันทึกข้อมูลเรียบร้อย ✅");
+      liff.closeWindow();
+    } else {
+      alert("บันทึกไม่สำเร็จ ❌\n" + res.message);
+    }
   })
   .catch(err => {
     console.error(err);
-    alert("บันทึกข้อมูลไม่สำเร็จ ❌");
+    alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ❌");
   });
 }
 </script>
