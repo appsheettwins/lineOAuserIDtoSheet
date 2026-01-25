@@ -2,152 +2,195 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>LIFF Form V1.1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ลงทะเบียนกิจกรรม</title>
+
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
 body {
-  margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(135deg,#06c755,#00bfa5);
-}
-.container {
-  max-width: 420px;
-  margin: auto;
+  background: linear-gradient(135deg,#36d1dc,#5b86e5);
+  margin: 0;
   padding: 16px;
 }
 .card {
   background: #fff;
-  border-radius: 18px;
+  border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 15px 30px rgba(0,0,0,.15);
+  max-width: 420px;
+  margin: auto;
+  box-shadow: 0 10px 25px rgba(0,0,0,.15);
 }
-.profile { text-align:center; }
+.profile {
+  text-align: center;
+  margin-bottom: 16px;
+}
 .profile img {
   width: 90px;
   height: 90px;
   border-radius: 50%;
 }
-.profile h3 { margin: 8px 0; }
-input, select {
-  width: 100%;
-  padding: 14px;
+.profile h3 {
+  margin: 8px 0 0;
+}
+label {
+  font-weight: bold;
   margin-top: 12px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
+  display: block;
+}
+input, select, button {
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
   font-size: 16px;
 }
 button {
-  width: 100%;
-  margin-top: 16px;
-  padding: 14px;
-  border-radius: 14px;
-  border: none;
-  background: #06c755;
+  background: #5b86e5;
   color: #fff;
-  font-size: 18px;
-  font-weight: bold;
+  border: none;
+  margin-top: 18px;
 }
-.hidden { display:none; }
+button:active {
+  opacity: .85;
+}
+.summary {
+  display: none;
+}
+.summary p {
+  margin: 6px 0;
+}
 </style>
 </head>
 
 <body>
 
-<div class="container">
-
 <div class="card" id="formBox">
   <div class="profile">
-    <img id="picture">
+    <img id="linePic">
     <h3 id="lineName"></h3>
   </div>
 
-  <input id="fullName" placeholder="ชื่อ - นามสกุล">
+  <label>ชื่อ–นามสกุล</label>
+  <input id="fullname" placeholder="กรอกชื่อ–นามสกุล">
 
-  <input id="phone" type="tel" inputmode="numeric" maxlength="10"
-    placeholder="เบอร์โทรศัพท์ 10 หลัก"
-    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+  <label>เบอร์โทรศัพท์</label>
+  <input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="0XXXXXXXXX">
 
-  <select id="activitySelect"></select>
-  <select id="subActivitySelect" disabled></select>
+  <label>กิจกรรม</label>
+  <select id="activity" onchange="loadItems()">
+    <option value="">-- เลือกกิจกรรม --</option>
+  </select>
 
-  <button id="saveBtn">บันทึกข้อมูล</button>
+  <label>รายการ</label>
+  <select id="item">
+    <option value="">-- เลือกรายการ --</option>
+  </select>
+
+  <button onclick="saveData()">บันทึกข้อมูล</button>
 </div>
 
-<div class="card hidden" id="summaryBox">
-  <h2>บันทึกสำเร็จ ✅</h2>
-  <p id="summaryText"></p>
-  <button onclick="newForm()">เพิ่มข้อมูลใหม่</button>
-</div>
-
+<div class="card summary" id="summaryBox">
+  <h3>✅ สรุปข้อมูล</h3>
+  <p><b>ชื่อ:</b> <span id="s_name"></span></p>
+  <p><b>เบอร์:</b> <span id="s_phone"></span></p>
+  <p><b>กิจกรรม:</b> <span id="s_activity"></span></p>
+  <p><b>รายการ:</b> <span id="s_item"></span></p>
+  <button onclick="resetForm()">เพิ่มข้อมูลใหม่</button>
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 const LIFF_ID = "2008940385-hkDtMTsg";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
-let userProfile = {};
+let profile = {};
+let activityData = {};
 
 async function init() {
   await liff.init({ liffId: LIFF_ID });
-
   if (!liff.isLoggedIn()) {
     liff.login();
     return;
   }
 
-  userProfile = await liff.getProfile();
-  document.getElementById("lineName").innerText = userProfile.displayName;
-  document.getElementById("linePic").src = userProfile.pictureUrl;
+  profile = await liff.getProfile();
+  linePic.src = profile.pictureUrl;
+  lineName.textContent = profile.displayName;
+
+  loadActivities();
+}
+
+async function loadActivities() {
+  const res = await fetch(GAS_URL + "?mode=activities");
+  activityData = await res.json();
+
+  activity.innerHTML = '<option value="">-- เลือกกิจกรรม --</option>';
+  Object.keys(activityData).forEach(a => {
+    const opt = document.createElement("option");
+    opt.value = a;
+    opt.textContent = a;
+    activity.appendChild(opt);
+  });
+}
+
+function loadItems() {
+  item.innerHTML = '<option value="">-- เลือกรายการ --</option>';
+  const list = activityData[activity.value] || [];
+  list.forEach(i => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = i;
+    item.appendChild(opt);
+  });
 }
 
 async function saveData() {
-  const phone = document.getElementById("phone").value;
-  const activity = document.getElementById("activity").value;
-  const item = document.getElementById("item").value;
-
-  const payload = {
-    userId: userProfile.userId,
-    displayName: userProfile.displayName,
-    phone,
-    activity,
-    item
+  const data = {
+    userId: profile.userId,
+    fullname: fullname.value,
+    phone: phone.value,
+    activity: activity.value,
+    item: item.value
   };
 
   try {
     const res = await fetch(GAS_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(data)
     });
-
     const result = await res.json();
 
     if (result.success) {
-      showSummary(payload);
+      showSummary(data);
     } else {
       alert("บันทึกไม่สำเร็จ");
     }
-
-  } catch (err) {
+  } catch {
     alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
   }
 }
 
-function showSummary(data) {
-  document.getElementById("form").style.display = "none";
-  document.getElementById("summary").style.display = "block";
+function showSummary(d) {
+  formBox.style.display = "none";
+  summaryBox.style.display = "block";
+  s_name.textContent = d.fullname;
+  s_phone.textContent = d.phone;
+  s_activity.textContent = d.activity;
+  s_item.textContent = d.item;
+}
 
-  document.getElementById("sumName").innerText = data.displayName;
-  document.getElementById("sumPhone").innerText = data.phone;
-  document.getElementById("sumAct").innerText = data.activity;
-  document.getElementById("sumItem").innerText = data.item;
+function resetForm() {
+  summaryBox.style.display = "none";
+  formBox.style.display = "block";
+  fullname.value = phone.value = "";
+  activity.selectedIndex = item.selectedIndex = 0;
 }
 
 window.onload = init;
 </script>
-
 
 </body>
 </html>
