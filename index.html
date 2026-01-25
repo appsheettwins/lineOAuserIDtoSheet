@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>LIFF Form V1</title>
+<title>LIFF Form V1.1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -69,13 +69,8 @@ button {
     placeholder="เบอร์โทรศัพท์ 10 หลัก"
     oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
 
-  <select id="activitySelect">
-    <option value="">เลือกกิจกรรม</option>
-  </select>
-
-  <select id="subActivitySelect" disabled>
-    <option value="">เลือกรายการ</option>
-  </select>
+  <select id="activitySelect"></select>
+  <select id="subActivitySelect" disabled></select>
 
   <button id="saveBtn">บันทึกข้อมูล</button>
 </div>
@@ -104,11 +99,10 @@ async function init() {
   }
 
   profileData = await liff.getProfile();
-  document.getElementById("picture").src = profileData.pictureUrl;
-  document.getElementById("lineName").textContent = profileData.displayName;
+  picture.src = profileData.pictureUrl;
+  lineName.textContent = profileData.displayName;
 
   await loadActivities();
-
   document.getElementById("saveBtn").addEventListener("click", saveData);
 }
 
@@ -116,68 +110,72 @@ async function loadActivities() {
   const res = await fetch(GAS_URL + "?mode=activity");
   activityMap = await res.json();
 
-  const actSel = document.getElementById("activitySelect");
-  actSel.innerHTML = `<option value="">เลือกกิจกรรม</option>`;
+  const act = document.getElementById("activitySelect");
+  const sub = document.getElementById("subActivitySelect");
 
-  Object.keys(activityMap).forEach(act => {
-    const opt = document.createElement("option");
-    opt.value = act;
-    opt.textContent = act;
-    actSel.appendChild(opt);
+  act.innerHTML = `<option value="">เลือกกิจกรรม</option>`;
+  sub.innerHTML = `<option value="">เลือกรายการ</option>`;
+  sub.disabled = true;
+
+  Object.keys(activityMap).forEach(a => {
+    act.innerHTML += `<option value="${a}">${a}</option>`;
   });
 
-  actSel.onchange = () => {
-    const subSel = document.getElementById("subActivitySelect");
-    subSel.innerHTML = `<option value="">เลือกรายการ</option>`;
-    subSel.disabled = true;
-
-    const list = activityMap[actSel.value];
-    if (!list) return;
-
-    list.forEach(sub => {
-      const opt = document.createElement("option");
-      opt.value = sub;
-      opt.textContent = sub;
-      subSel.appendChild(opt);
+  act.onchange = () => {
+    sub.innerHTML = `<option value="">เลือกรายการ</option>`;
+    const list = activityMap[act.value];
+    if (!list) {
+      sub.disabled = true;
+      return;
+    }
+    list.forEach(s => {
+      sub.innerHTML += `<option value="${s}">${s}</option>`;
     });
-
-    subSel.disabled = false;
+    sub.disabled = false;
   };
 }
 
 async function saveData() {
-  try {
-    const fullName = document.getElementById("fullName").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const activity = document.getElementById("activitySelect").value;
-    const subActivity = document.getElementById("subActivitySelect").value;
+  const fullName = document.getElementById("fullName").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const activity = document.getElementById("activitySelect").value;
+  const subActivity = document.getElementById("subActivitySelect").value;
 
-    if (!fullName || phone.length !== 10 || !activity || !subActivity) {
-      alert("กรุณากรอกข้อมูลให้ครบ");
-      return;
-    }
+  if (!fullName || phone.length !== 10 || !activity || !subActivity) {
+    alert("กรุณากรอกข้อมูลให้ครบ");
+    return;
+  }
 
-    // 1️⃣ บันทึกลง Sheet
-    await fetch(GAS_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: profileData.userId,
-        lineName: profileData.displayName,
-        pictureUrl: profileData.pictureUrl,
-        fullName,
-        phone,
-        activity,
-        subActivity
-      })
-    });
+  // ✅ 1) ส่งข้อมูลเข้า Sheet (ถือว่าสำเร็จทันที)
+  fetch(GAS_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userId: profileData.userId,
+      lineName: profileData.displayName,
+      pictureUrl: profileData.pictureUrl,
+      fullName,
+      phone,
+      activity,
+      subActivity
+    })
+  });
 
-    // 2️⃣ ส่งข้อความเข้า LINE
-    if (liff.isInClient()) {
-      await liff.sendMessages([{
-        type: "text",
-        text:
+  // ✅ 2) แสดงหน้าสรุปทันที
+  summaryText.innerText =
+`ชื่อ: ${fullName}
+กิจกรรม: ${activity}
+รายการ: ${subActivity}`;
+
+  formBox.classList.add("hidden");
+  summaryBox.classList.remove("hidden");
+
+  // ✅ 3) พยายามส่งข้อความเข้า LINE (ไม่ให้พังถ้าส่งไม่ได้)
+  if (liff.isInClient()) {
+    liff.sendMessages([{
+      type: "text",
+      text:
 `📋 สรุปการลงทะเบียน
 👤 ${fullName}
 📞 ${phone}
@@ -185,34 +183,19 @@ async function saveData() {
 📝 ${subActivity}
 
 ✅ บันทึกเรียบร้อย`
-      }]);
-    }
-
-    // 3️⃣ แสดงหน้าสรุป
-    document.getElementById("summaryText").innerText =
-`ชื่อ: ${fullName}
-กิจกรรม: ${activity}
-รายการ: ${subActivity}`;
-
-    document.getElementById("formBox").classList.add("hidden");
-    document.getElementById("summaryBox").classList.remove("hidden");
-
-  } catch (err) {
-    alert("บันทึกไม่สำเร็จ กรุณาลองใหม่");
-    console.error(err);
+    }]).catch(err => console.warn("Send LINE failed", err));
   }
 }
 
 function newForm() {
-  document.getElementById("fullName").value = "";
-  document.getElementById("phone").value = "";
-  document.getElementById("activitySelect").value = "";
-  const sub = document.getElementById("subActivitySelect");
-  sub.innerHTML = `<option value="">เลือกรายการ</option>`;
-  sub.disabled = true;
+  fullName.value = "";
+  phone.value = "";
+  activitySelect.value = "";
+  subActivitySelect.innerHTML = `<option value="">เลือกรายการ</option>`;
+  subActivitySelect.disabled = true;
 
-  document.getElementById("summaryBox").classList.add("hidden");
-  document.getElementById("formBox").classList.remove("hidden");
+  summaryBox.classList.add("hidden");
+  formBox.classList.remove("hidden");
 }
 
 init();
