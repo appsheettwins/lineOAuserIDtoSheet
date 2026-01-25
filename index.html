@@ -1,190 +1,164 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>LIFF Form v1.4</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Form v1.4</title>
+
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
-body{
+body {
+  font-family: sans-serif;
+  background: linear-gradient(135deg,#4facfe,#00f2fe);
   margin:0;
-  font-family:sans-serif;
-  background:linear-gradient(135deg,#6366f1,#22d3ee);
-}
-.card{
-  max-width:420px;
-  margin:20px auto;
-  background:#fff;
-  border-radius:20px;
   padding:20px;
-  box-shadow:0 15px 40px rgba(0,0,0,.2);
 }
-img{
-  width:90px;
-  border-radius:50%;
-  display:block;
+.card {
+  background:#fff;
+  border-radius:16px;
+  padding:20px;
+  max-width:420px;
   margin:auto;
 }
-h3{text-align:center;margin:10px 0}
-label{display:block;margin-top:12px;font-weight:600}
-input,select{
+h2 { text-align:center; }
+label { margin-top:10px; display:block; font-weight:bold; }
+input, select, button {
   width:100%;
   padding:12px;
-  margin-top:6px;
-  border-radius:12px;
-  border:1px solid #ddd;
-  font-size:15px;
-}
-button{
-  width:100%;
-  margin-top:16px;
-  padding:14px;
+  margin-top:5px;
+  border-radius:10px;
+  border:1px solid #ccc;
   font-size:16px;
+}
+button {
+  background:#4facfe;
+  color:#fff;
   border:none;
-  border-radius:14px;
-  background:linear-gradient(135deg,#22c55e,#16a34a);
+  margin-top:20px;
+}
+button:disabled { opacity:0.6; }
+#summary { display:none; }
+.loading {
+  text-align:center;
   color:#fff;
 }
-button:disabled{opacity:.6}
-#loading{text-align:center;display:none;margin-top:15px}
-.spinner{
-  width:36px;height:36px;
-  border:4px solid #ddd;
-  border-top:4px solid #22c55e;
-  border-radius:50%;
-  margin:auto;
-  animation:spin 1s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-#summary{display:none;text-align:center}
 </style>
 </head>
 
 <body>
-<div class="card">
 
-<div id="form">
-  <img id="pic">
-  <h3 id="lineName"></h3>
+<div class="card" id="formBox">
+  <h2>ลงทะเบียนกิจกรรม</h2>
+
+  <p><strong>LINE :</strong> <span id="displayName">กำลังโหลด...</span></p>
 
   <label>ชื่อ-นามสกุล</label>
-  <input id="inputName" placeholder="กรอกชื่อ-นามสกุล">
+  <input id="fullname" placeholder="กรอกชื่อ-นามสกุล">
 
   <label>เบอร์โทร</label>
-  <input id="phone" type="tel" maxlength="10" placeholder="0XXXXXXXXX">
+  <input id="phone" type="tel" inputmode="numeric" maxlength="10">
 
   <label>กิจกรรม</label>
-  <select id="activity" onchange="updateItems()">
-    <option value="">-- เลือกกิจกรรม --</option>
-  </select>
+  <select id="activity"></select>
 
   <label>รายการ</label>
-  <select id="item">
-    <option value="">-- เลือกรายการ --</option>
-  </select>
+  <select id="item"></select>
 
-  <button id="saveBtn" onclick="save()">บันทึกข้อมูล</button>
-
-  <div id="loading">
-    <div class="spinner"></div>
-    <p>กำลังบันทึกข้อมูล...</p>
-  </div>
+  <button id="saveBtn" onclick="submitForm()">บันทึกข้อมูล</button>
 </div>
 
-<div id="summary">
-  <h3>✅ บันทึกสำเร็จ</h3>
-  <p id="sum"></p>
-  <button onclick="location.reload()">➕ เพิ่มข้อมูลใหม่</button>
+<div class="card" id="summary">
+  <h2>✅ บันทึกเรียบร้อย</h2>
+  <p id="sumText"></p>
+  <button onclick="resetForm()">➕ เพิ่มข้อมูลใหม่</button>
 </div>
 
-</div>
+<p class="loading" id="loading" style="display:none;">⏳ กำลังบันทึก...</p>
 
 <script>
 const LIFF_ID = "2008940385-hkDtMTsg";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
-let profile = {};
+let lineProfile = {};
 let activityMap = {};
 
-async function init(){
+async function init() {
   await liff.init({ liffId: LIFF_ID });
-  if(!liff.isLoggedIn()) liff.login();
 
-  profile = await liff.getProfile();
-  pic.src = profile.pictureUrl;
-  lineName.innerText = profile.displayName;
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
 
-  loadActivities();
+  const profile = await liff.getProfile();
+  lineProfile = profile;
+  document.getElementById("displayName").innerText = profile.displayName;
+
+  loadActivity();
 }
 
-async function loadActivities(){
-  const res = await fetch(GAS_URL + "?mode=activity");
-  const data = await res.json();
-
-  activityMap = {};
-  data.forEach(d=>{
-    if(!activityMap[d.activity]) activityMap[d.activity]=[];
-    activityMap[d.activity].push(d.item);
-  });
-
-  Object.keys(activityMap).forEach(a=>{
-    activity.innerHTML += `<option value="${a}">${a}</option>`;
-  });
+function loadActivity() {
+  fetch(GAS_URL + "?mode=activity")
+    .then(res => res.json())
+    .then(data => {
+      activityMap = data;
+      const act = document.getElementById("activity");
+      act.innerHTML = '<option value="">-- เลือกกิจกรรม --</option>';
+      Object.keys(data).forEach(a => {
+        act.innerHTML += `<option value="${a}">${a}</option>`;
+      });
+    });
 }
 
-function updateItems(){
-  item.innerHTML = `<option value="">-- เลือกรายการ --</option>`;
-  (activityMap[activity.value] || []).forEach(i=>{
+document.getElementById("activity").onchange = function() {
+  const items = activityMap[this.value] || [];
+  const item = document.getElementById("item");
+  item.innerHTML = '<option value="">-- เลือกรายการ --</option>';
+  items.forEach(i => {
     item.innerHTML += `<option value="${i}">${i}</option>`;
   });
-}
-
-async function save(){
-  saveBtn.disabled = true;
-  loading.style.display = "block";
-
-  const lineProfileLink = `https://line.me/ti/p/~${profile.userId}`;
-
-const payload = {
-  userId: profile.userId,
-  displayName: profile.displayName,
-  profilename: lineProfileLink, // ✅ เก็บเป็นลิงก์โปรไฟล์
-  inputName: inputName.value,
-  phone: phone.value,
-  activity: activity.value,
-  item: item.value
 };
 
-  try {
-    await fetch(GAS_URL, {
-      method: "POST",
-      mode: "no-cors",   // ⭐ KEY POINT สำหรับ LIFF
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(payload)
-    });
+function submitForm() {
+  document.getElementById("loading").style.display = "block";
+  document.getElementById("saveBtn").disabled = true;
 
-    showSummary(payload);
+  const data = {
+    userId: lineProfile.userId,
+    displayName: lineProfile.displayName,
+    profilename: lineProfile.pictureUrl, // 👈 เก็บรูป แต่ไม่แสดง
+    inputName: document.getElementById("fullname").value,
+    phone: document.getElementById("phone").value,
+    activity: document.getElementById("activity").value,
+    item: document.getElementById("item").value
+  };
 
-  } catch(e) {
-    alert("❌ บันทึกไม่สำเร็จ");
-    saveBtn.disabled = false;
-    loading.style.display = "none";
-  }
+  fetch(GAS_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(r => {
+    document.getElementById("loading").style.display = "none";
+    if (r.success) {
+      document.getElementById("formBox").style.display = "none";
+      document.getElementById("summary").style.display = "block";
+      document.getElementById("sumText").innerText =
+        `${data.inputName}\n${data.activity} - ${data.item}`;
+    } else {
+      alert("บันทึกไม่สำเร็จ");
+      document.getElementById("saveBtn").disabled = false;
+    }
+  });
 }
 
-function showSummary(d){
-  form.style.display = "none";
-  summary.style.display = "block";
-  sum.innerHTML = `
-    👤 ${d.inputName}<br>
-    📞 ${d.phone}<br>
-    🎯 ${d.activity}<br>
-    📌 ${d.item}
-  `;
+function resetForm() {
+  location.reload();
 }
 
-window.onload = init;
+init();
 </script>
 </body>
 </html>
