@@ -14,20 +14,17 @@ body {
   background: linear-gradient(135deg, #06c755, #00bfa5);
   min-height: 100vh;
 }
-
 .container {
   max-width: 420px;
   margin: auto;
   padding: 16px;
 }
-
 .card {
   background: #ffffff;
   border-radius: 18px;
   padding: 20px;
   box-shadow: 0 15px 30px rgba(0,0,0,.15);
 }
-
 .profile {
   text-align: center;
   margin-bottom: 10px;
@@ -41,12 +38,10 @@ body {
   margin: 8px 0 0;
   color: #333;
 }
-
 h2 {
   text-align: center;
   color: #06c755;
 }
-
 input, select {
   width: 100%;
   padding: 14px;
@@ -55,7 +50,6 @@ input, select {
   border: 1px solid #ddd;
   font-size: 16px;
 }
-
 button {
   width: 100%;
   margin-top: 16px;
@@ -67,15 +61,12 @@ button {
   background: #06c755;
   color: #fff;
 }
-
 button.secondary {
   background: #00bfa5;
 }
-
 .hidden {
   display: none;
 }
-
 .summary p {
   font-size: 16px;
   margin: 10px 0;
@@ -97,7 +88,17 @@ button.secondary {
   <h2>ลงทะเบียนกิจกรรม</h2>
 
   <input id="fullName" placeholder="ชื่อ - นามสกุล">
-  <input id="phone" placeholder="เบอร์โทรศัพท์">
+
+  <!-- 📞 เบอร์โทร (แก้ไขตรงนี้) -->
+  <input
+    id="phone"
+    type="tel"
+    inputmode="numeric"
+    placeholder="เบอร์โทรศัพท์ (10 หลัก)"
+    maxlength="10"
+    pattern="[0-9]{10}"
+    oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,10)"
+  >
 
   <select id="activity">
     <option value="">เลือกกิจกรรม</option>
@@ -151,8 +152,8 @@ function saveData() {
   const phone = document.getElementById("phone").value;
   const activity = document.getElementById("activity").value;
 
-  if (!fullName || !phone || !activity) {
-    alert("กรุณากรอกข้อมูลให้ครบ");
+  if (!fullName || phone.length !== 10 || !activity) {
+    alert("กรุณากรอกข้อมูลให้ครบ และเบอร์โทรต้อง 10 หลัก");
     return;
   }
 
