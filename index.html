@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>สำรองที่นั่ง | LIFF v2.1.1</title>
+<title>สำรองที่นั่ง | LIFF v2.1.2</title>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -15,7 +14,6 @@
     margin: 0;
     padding: 16px;
   }
-
   .card {
     background: #fff;
     border-radius: 20px;
@@ -24,21 +22,18 @@
     margin: auto;
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
   }
-
   h1 {
     text-align: center;
     font-size: 24px;
     margin-bottom: 22px;
     color: #6a1b9a;
   }
-
   label {
     display: block;
     margin-top: 14px;
     font-weight: bold;
     font-size: 18px;
   }
-
   input, select {
     width: 100%;
     padding: 14px;
@@ -47,7 +42,6 @@
     border: 1px solid #ccc;
     margin-top: 6px;
   }
-
   button {
     margin-top: 22px;
     width: 100%;
@@ -57,21 +51,17 @@
     border: none;
     background: #7b1fa2;
     color: #fff;
-    cursor: pointer;
   }
-
   .loading {
     text-align: center;
     margin-top: 12px;
     font-size: 16px;
     display: none;
   }
-
   .summary {
     display: none;
     text-align: center;
   }
-
   .success-box {
     background: linear-gradient(135deg, #66bb6a, #43a047);
     color: #fff;
@@ -81,7 +71,6 @@
     font-weight: bold;
     margin-bottom: 16px;
   }
-
   .summary p {
     font-size: 18px;
     margin: 6px 0;
@@ -93,45 +82,45 @@
 
 <div class="card">
 
-  <h1>สำรองที่นั่งร่วมกิจกรรมธรรมยาตรา</h1>
+<h1>สำรองที่นั่งร่วมกิจกรรมธรรมยาตรา</h1>
 
-  <!-- FORM -->
-  <div id="formSection">
-    <label>ชื่อ-นามสกุล</label>
-    <input id="inputName">
+<!-- FORM -->
+<div id="formSection">
+  <label>ชื่อ-นามสกุล</label>
+  <input id="inputName">
 
-    <label>เบอร์โทรศัพท์</label>
-    <input id="phone" type="tel" maxlength="10" inputmode="numeric">
+  <label>เบอร์โทรศัพท์</label>
+  <input id="phone" type="tel" maxlength="10" inputmode="numeric">
 
-    <label>กิจกรรม</label>
-    <select id="activity" onchange="updateItems()">
-      <option value="">-- เลือกกิจกรรม --</option>
-    </select>
+  <label>กิจกรรม</label>
+  <select id="activity" onchange="updateItems()">
+    <option value="">-- เลือกกิจกรรม --</option>
+  </select>
 
-    <label>รายการ</label>
-    <select id="item" onchange="setTravelTime()">
-      <option value="">-- เลือกรายการ --</option>
-    </select>
+  <label>รายการ</label>
+  <select id="item" onchange="setTravelTime()">
+    <option value="">-- เลือกรายการ --</option>
+  </select>
 
-    <button onclick="submitForm()">บันทึกข้อมูล</button>
-    <div class="loading" id="loading">⏳ กำลังบันทึกข้อมูล...</div>
+  <button onclick="submitForm()">บันทึกข้อมูล</button>
+  <div class="loading" id="loading">⏳ กำลังบันทึกข้อมูล...</div>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary" id="summarySection">
+  <div class="success-box">
+    ✅ บันทึกสำเร็จ<br>
+    รอข้อความยืนยันสำรองที่นั่ง
   </div>
 
-  <!-- SUMMARY -->
-  <div class="summary" id="summarySection">
-    <div class="success-box">
-      ✅ บันทึกสำเร็จ<br>
-      รอข้อความยืนยันสำรองที่นั่ง
-    </div>
+  <p id="sName"></p>
+  <p id="sPhone"></p>
+  <p id="sActivity"></p>
+  <p id="sItem"></p>
+  <p id="sTravel"></p>
 
-    <p id="sName"></p>
-    <p id="sPhone"></p>
-    <p id="sActivity"></p>
-    <p id="sItem"></p>
-    <p id="sTravel"></p>
-
-    <button onclick="resetForm()">➕ เพิ่มข้อมูลใหม่</button>
-  </div>
+  <button onclick="resetForm()">➕ เพิ่มข้อมูลใหม่</button>
+</div>
 
 </div>
 
@@ -141,7 +130,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10
 
 let userData = {};
 let activityMap = {};
-let selectedTravelTime = ""; // ✅ FIX จุดสำคัญ
+let selectedTravelTime = "";
 
 async function initLIFF() {
   await liff.init({ liffId: LIFF_ID });
@@ -161,42 +150,39 @@ async function loadActivities() {
   const res = await fetch(GAS_URL + "?mode=activity");
   const rows = await res.json();
 
-  const actSel = document.getElementById("activity");
-
   rows.forEach(r => {
     if (!activityMap[r.activity]) {
       activityMap[r.activity] = [];
       const opt = document.createElement("option");
       opt.value = r.activity;
       opt.textContent = r.activity;
-      actSel.appendChild(opt);
+      activity.appendChild(opt);
     }
+
     activityMap[r.activity].push({
       item: r.item,
-      travelTime: r.travelTime
+      travelTime: r.travelTime   // ✅ ดึงจากคอลัม C
     });
   });
 }
 
 function updateItems() {
-  const act = activity.value;
   item.innerHTML = `<option value="">-- เลือกรายการ --</option>`;
-  selectedTravelTime = ""; // reset
+  selectedTravelTime = "";
 
-  if (!activityMap[act]) return;
-
-  activityMap[act].forEach(o => {
+  const list = activityMap[activity.value] || [];
+  list.forEach(o => {
     const opt = document.createElement("option");
     opt.value = o.item;
     opt.textContent = o.item;
-    opt.dataset.travel = o.travelTime;
+    opt.dataset.travelTime = o.travelTime;
     item.appendChild(opt);
   });
 }
 
 function setTravelTime() {
   const sel = item.selectedOptions[0];
-  selectedTravelTime = sel ? sel.dataset.travel || "" : "";
+  selectedTravelTime = sel ? sel.dataset.travelTime : "";
 }
 
 async function submitForm() {
@@ -206,7 +192,7 @@ async function submitForm() {
     phone: phone.value,
     activity: activity.value,
     item: item.value,
-    travelTime: selectedTravelTime // ✅ FIX แนบค่าเข้า payload
+    travelTime: selectedTravelTime
   };
 
   if (!payload.inputName || !payload.phone || !payload.activity || !payload.item) {
@@ -225,7 +211,7 @@ async function submitForm() {
   formSection.style.display = "none";
   summarySection.style.display = "block";
 
-  sName.innerText = "👤 " + payload.inputName;
+  sName.innerText = "👦 " + payload.inputName;
   sPhone.innerText = "📞 " + payload.phone;
   sActivity.innerText = "🎯 " + payload.activity;
   sItem.innerText = "📌 " + payload.item;
