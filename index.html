@@ -1,43 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Form v1.5</title>
+<title>LIFF Form v1.4</title>
 
 <style>
 body {
-  background: linear-gradient(135deg,#00c6ff,#0072ff);
   font-family: sans-serif;
+  background: linear-gradient(135deg,#00c6ff,#0072ff);
   padding: 16px;
 }
 .card {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.2);
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+.profile {
+  text-align: center;
+}
+.profile img {
+  width: 90px;
+  border-radius: 50%;
 }
 h2 {
-  text-align: center;
-  margin-bottom: 10px;
+  margin: 8px 0 4px;
 }
 label {
-  margin-top: 12px;
   display: block;
+  margin-top: 14px;
   font-weight: bold;
 }
 input, select, button {
   width: 100%;
   padding: 12px;
+  font-size: 16px;
   border-radius: 10px;
   border: 1px solid #ddd;
   margin-top: 6px;
-  font-size: 16px;
 }
 button {
   background: #06c755;
   color: #fff;
   border: none;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 #loading {
   display: none;
@@ -53,13 +60,17 @@ button {
 <body>
 
 <div class="card" id="formPage">
-  <h2 id="displayName">กำลังโหลด...</h2>
+
+  <div class="profile">
+    <img id="picture">
+    <h2 id="displayName">กำลังโหลด...</h2>
+  </div>
 
   <label>ชื่อ-นามสกุล</label>
   <input id="inputName">
 
   <label>เบอร์โทร</label>
-  <input id="phone">
+  <input id="phone" type="tel" maxlength="10">
 
   <label>กิจกรรม</label>
   <select id="activity" onchange="updateItems()">
@@ -76,7 +87,7 @@ button {
 </div>
 
 <div class="card" id="summary">
-  <h2>✅ บันทึกสำเร็จ</h2>
+  <h2>✅ บันทึกเรียบร้อย</h2>
   <p id="sumText"></p>
   <button onclick="resetForm()">➕ เพิ่มข้อมูลใหม่</button>
 </div>
@@ -87,7 +98,7 @@ const LIFF_ID = "2008940385-hkDtMTsg";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
 let profile = {};
-let activities = {};
+let activityData = {};
 
 async function init() {
   await liff.init({ liffId: LIFF_ID });
@@ -97,6 +108,7 @@ async function init() {
   }
 
   profile = await liff.getProfile();
+  picture.src = profile.pictureUrl;
   displayName.innerText = profile.displayName;
 
   loadActivity();
@@ -106,8 +118,7 @@ function loadActivity() {
   fetch(GAS_URL + "?action=activity")
     .then(r => r.json())
     .then(d => {
-      activities = d;
-      activity.innerHTML = '<option value="">-- เลือกกิจกรรม --</option>';
+      activityData = d;
       Object.keys(d).forEach(a => {
         activity.innerHTML += `<option value="${a}">${a}</option>`;
       });
@@ -116,8 +127,8 @@ function loadActivity() {
 
 function updateItems() {
   item.innerHTML = '<option value="">-- เลือกรายการ --</option>';
-  if (!activities[activity.value]) return;
-  activities[activity.value].forEach(i => {
+  if (!activityData[activity.value]) return;
+  activityData[activity.value].forEach(i => {
     item.innerHTML += `<option value="${i}">${i}</option>`;
   });
 }
@@ -141,11 +152,12 @@ function save() {
     formPage.style.display = "none";
     summary.style.display = "block";
 
-    sumText.innerHTML =
-      `👤 ${inputName.value}<br>
-       📞 ${phone.value}<br>
-       🎯 ${activity.value}<br>
-       📌 ${item.value}`;
+    sumText.innerHTML = `
+      👤 ${inputName.value}<br>
+      📞 ${phone.value}<br>
+      🎯 ${activity.value}<br>
+      📌 ${item.value}
+    `;
   });
 }
 
