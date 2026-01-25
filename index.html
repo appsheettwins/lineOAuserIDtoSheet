@@ -2,9 +2,8 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>LIFF Form v1.3</title>
+<title>LIFF Form v1.3 FIX</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
@@ -21,34 +20,27 @@ body{
   padding:20px;
   box-shadow:0 15px 40px rgba(0,0,0,.2);
 }
-img{
-  width:90px;
-  border-radius:50%;
-  display:block;
-  margin:auto;
-}
-h3{text-align:center;margin:10px 0}
-label{margin-top:12px;display:block;font-weight:600}
+img{width:90px;border-radius:50%;display:block;margin:auto}
+h3{text-align:center}
+label{display:block;margin-top:12px;font-weight:600}
 input,select{
   width:100%;
   padding:12px;
   margin-top:6px;
   border-radius:12px;
   border:1px solid #ddd;
-  font-size:16px;
 }
 button{
   width:100%;
   margin-top:16px;
   padding:14px;
-  font-size:17px;
+  font-size:16px;
   border:none;
   border-radius:14px;
   background:linear-gradient(135deg,#22c55e,#16a34a);
   color:#fff;
 }
-.summary{display:none;text-align:center}
-.summary p{margin:6px 0}
+#summary{display:none;text-align:center}
 </style>
 </head>
 
@@ -60,10 +52,10 @@ button{
   <h3 id="lineName"></h3>
 
   <label>ชื่อ-นามสกุล</label>
-  <input id="inputName" placeholder="กรอกชื่อ-นามสกุล">
+  <input id="inputName">
 
   <label>เบอร์โทร</label>
-  <input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="0xxxxxxxxx">
+  <input id="phone">
 
   <label>กิจกรรม</label>
   <select id="activity" onchange="updateItems()">
@@ -78,23 +70,23 @@ button{
   <button onclick="save()">บันทึกข้อมูล</button>
 </div>
 
-<div id="summary" class="summary">
+<div id="summary">
   <h3>✅ บันทึกสำเร็จ</h3>
   <p id="sum"></p>
-  <button onclick="resetForm()">➕ เพิ่มข้อมูลใหม่</button>
+  <button onclick="location.reload()">➕ เพิ่มข้อมูลใหม่</button>
 </div>
 
 </div>
 
 <script>
 const LIFF_ID = "2008940385-hkDtMTsg";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyygVxywjy4MKAcxTmr7Idu_LPtK_AECsomy4CL_mSzom5XBZdmE8P-xDttAfAhcyxp/exec";
 
 let profile={}, activityMap={};
 
 async function init(){
   await liff.init({ liffId: LIFF_ID });
-  if(!liff.isLoggedIn()) return liff.login();
+  if(!liff.isLoggedIn()) liff.login();
 
   profile = await liff.getProfile();
   pic.src = profile.pictureUrl;
@@ -104,13 +96,13 @@ async function init(){
 }
 
 async function loadActivities(){
-  const r = await fetch(GAS_URL+"?mode=activity");
-  const data = await r.json();
+  const res = await fetch(GAS_URL + "?mode=activity");
+  const data = await res.json();
 
   activityMap = {};
-  data.forEach(x=>{
-    if(!activityMap[x.activity]) activityMap[x.activity]=[];
-    activityMap[x.activity].push(x.item);
+  data.forEach(d=>{
+    if(!activityMap[d.activity]) activityMap[d.activity]=[];
+    activityMap[d.activity].push(d.item);
   });
 
   Object.keys(activityMap).forEach(a=>{
@@ -126,35 +118,38 @@ function updateItems(){
 }
 
 async function save(){
-  const payload={
-    userId:profile.userId,
-    displayName:profile.displayName,
-    profilename:profile.displayName,
-    inputName:inputName.value,
-    phone:phone.value,
-    activity:activity.value,
-    item:item.value
+  const payload = {
+    userId: profile.userId,
+    displayName: profile.displayName,
+    profilename: profile.displayName,
+    inputName: inputName.value,
+    phone: phone.value,
+    activity: activity.value,
+    item: item.value
   };
 
-  const r = await fetch(GAS_URL,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify(payload)
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
   });
-  const res = await r.json();
-  if(!res.success) return alert("บันทึกไม่สำเร็จ");
+
+  const result = await res.json();
+
+  if(!result.success){
+    alert("❌ บันทึกไม่สำเร็จ");
+    return;
+  }
 
   form.style.display="none";
   summary.style.display="block";
-  sum.innerHTML=`
+  sum.innerHTML = `
     👤 ${payload.inputName}<br>
     📞 ${payload.phone}<br>
     🎯 ${payload.activity}<br>
     📌 ${payload.item}
   `;
 }
-
-function resetForm(){ location.reload(); }
 
 window.onload = init;
 </script>
