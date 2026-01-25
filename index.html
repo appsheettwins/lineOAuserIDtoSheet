@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>สำรองที่นั่ง | LIFF v2.1</title>
+<title>สำรองที่นั่ง | LIFF v2.1.1</title>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -140,8 +140,8 @@ const LIFF_ID = "2008940385-hkDtMTsg";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
 
 let userData = {};
-let activityMap = {}; 
-// structure: { activity: [{ item, travelTime }] }
+let activityMap = {};
+let selectedTravelTime = ""; // ✅ FIX จุดสำคัญ
 
 async function initLIFF() {
   await liff.init({ liffId: LIFF_ID });
@@ -181,6 +181,8 @@ async function loadActivities() {
 function updateItems() {
   const act = activity.value;
   item.innerHTML = `<option value="">-- เลือกรายการ --</option>`;
+  selectedTravelTime = ""; // reset
+
   if (!activityMap[act]) return;
 
   activityMap[act].forEach(o => {
@@ -194,7 +196,7 @@ function updateItems() {
 
 function setTravelTime() {
   const sel = item.selectedOptions[0];
-  userData.travelTime = sel ? sel.dataset.travel : "";
+  selectedTravelTime = sel ? sel.dataset.travel || "" : "";
 }
 
 async function submitForm() {
@@ -203,7 +205,8 @@ async function submitForm() {
     inputName: inputName.value,
     phone: phone.value,
     activity: activity.value,
-    item: item.value
+    item: item.value,
+    travelTime: selectedTravelTime // ✅ FIX แนบค่าเข้า payload
   };
 
   if (!payload.inputName || !payload.phone || !payload.activity || !payload.item) {
@@ -222,11 +225,11 @@ async function submitForm() {
   formSection.style.display = "none";
   summarySection.style.display = "block";
 
-  sName.innerText = "👦 " + payload.inputName;
+  sName.innerText = "👤 " + payload.inputName;
   sPhone.innerText = "📞 " + payload.phone;
   sActivity.innerText = "🎯 " + payload.activity;
   sItem.innerText = "📌 " + payload.item;
-  sTravel.innerText = "🕒 เวลาเดินทาง: " + userData.travelTime;
+  sTravel.innerText = "🕒 เวลาเดินทาง: " + payload.travelTime;
 }
 
 function resetForm() {
