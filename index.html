@@ -91,8 +91,8 @@ button {
 </div>
 
 <script>
-const LIFF_ID = "2008940385-hkDtMTsg";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzHGWEA9JYbd1e9-cGnod10qrWuy-hz39IEDd1DhjkCa8bRP-D4qVLkGXNQbV2dcjNI/exec";
+const LIFF_ID = "YOUR_LIFF_ID";
+const GAS_URL = "YOUR_GAS_WEBAPP_URL";
 
 let profile = {};
 let activityMap = {};
@@ -108,63 +108,43 @@ async function init() {
   linePic.src = profile.pictureUrl;
   lineName.textContent = profile.displayName;
 
-  await loadActivities();
+  loadActivities();
 }
 
 async function loadActivities() {
-  try {
-    const res = await fetch(GAS_URL + "?mode=activity");
-    const data = await res.json();
+  const res = await fetch(GAS_URL + "?mode=activity");
+  const data = await res.json();
 
-    if (!Array.isArray(data)) {
-      console.error("Activity data is not array", data);
-      alert("โหลดกิจกรรมไม่สำเร็จ (ข้อมูลไม่ถูกต้อง)");
-      return;
-    }
+  activityMap = {};
+  data.forEach(r => {
+    if (!activityMap[r.activity]) activityMap[r.activity] = [];
+    activityMap[r.activity].push(r.item);
+  });
 
-    activityMap = {};
-    data.forEach(row => {
-      const act = row.activity || row.Activity;
-      const itm = row.item || row.Item;
-      if (!act || !itm) return;
-
-      if (!activityMap[act]) activityMap[act] = [];
-      activityMap[act].push(itm);
-    });
-
-    const activitySelect = document.getElementById("activity");
-    activitySelect.innerHTML = '<option value="">-- เลือกกิจกรรม --</option>';
-
-    Object.keys(activityMap).forEach(act => {
-      const opt = document.createElement("option");
-      opt.value = act;
-      opt.textContent = act;
-      activitySelect.appendChild(opt);
-    });
-
-    activitySelect.onchange = updateItems;
-
-  } catch (err) {
-    console.error(err);
-    alert("เชื่อมต่อข้อมูลกิจกรรมไม่ได้");
-  }
+  activity.innerHTML = '<option value="">-- เลือกกิจกรรม --</option>';
+  Object.keys(activityMap).forEach(a => {
+    const opt = document.createElement("option");
+    opt.value = a;
+    opt.textContent = a;
+    activity.appendChild(opt);
+  });
 }
 
 function updateItems() {
-  const itemSelect = document.getElementById("item");
-  itemSelect.innerHTML = '<option value="">-- เลือกรายการ --</option>';
-
-  (activityMap[activity.value] || []).forEach(it => {
+  item.innerHTML = '<option value="">-- เลือกรายการ --</option>';
+  (activityMap[activity.value] || []).forEach(i => {
     const opt = document.createElement("option");
-    opt.value = it;
-    opt.textContent = it;
-    itemSelect.appendChild(opt);
+    opt.value = i;
+    opt.textContent = i;
+    item.appendChild(opt);
   });
 }
 
 async function saveData() {
-  const data = {
+  const payload = {
     userId: profile.userId,
+    displayName: profile.displayName,
+    inputName: fullname.value,
     fullname: fullname.value,
     phone: phone.value,
     activity: activity.value,
@@ -174,11 +154,11 @@ async function saveData() {
   const res = await fetch(GAS_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    body: JSON.stringify(payload)
   });
 
   const result = await res.json();
-  if (result.success) showSummary(data);
+  if (result.success) showSummary(payload);
   else alert("บันทึกไม่สำเร็จ");
 }
 
@@ -198,6 +178,7 @@ function resetForm() {
 
 window.onload = init;
 </script>
+
 
 </body>
 </html>
