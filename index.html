@@ -129,12 +129,10 @@ async function loadActivities() {
   const actSet = [...new Set(activities.map(a => a.activity))];
   const sel = document.getElementById("activity");
 
-  actSet.forEach(a => {
-    const o = document.createElement("option");
-    o.value = o.textContent = a;
-    sel.appendChild(o);
+  await fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
   });
-}
 
 function updateItems() {
   const act = document.getElementById("activity").value;
