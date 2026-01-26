@@ -22,10 +22,18 @@ body {
   margin:auto;
   box-shadow:0 10px 30px rgba(0,0,0,.15);
 }
-h1 {
+
+/* 🔹 หัวข้อเวอร์ชัน 3 */
+.header-title {
   text-align:center;
-  margin-bottom:20px;
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:18px;
+  background: linear-gradient(90deg,#ff6a00,#ff2d55,#34c759);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
+
 label {
   font-weight:600;
   margin-top:14px;
@@ -33,12 +41,13 @@ label {
 }
 input, select {
   width:100%;
-  padding:14px;
-  font-size:18px;
-  border-radius:12px;
+  padding:16px;
+  font-size:20px;
+  border-radius:14px;
   border:1px solid #ddd;
   margin-top:6px;
 }
+
 button {
   margin-top:20px;
   width:100%;
@@ -53,6 +62,7 @@ button {
 button:disabled {
   background:#ccc;
 }
+
 #summary {
   display:none;
   text-align:center;
@@ -73,32 +83,39 @@ button:disabled {
 
 <body>
 <div class="card">
-  <h1>สำรองที่นั่งร่วมกิจกรรมธรรมยาตรา</h1>
+
+  <!-- 🔹 HEADER -->
+  <div class="header-title">
+    สำรองที่นั่งร่วมกิจกรรมธรรมยาตรา
+  </div>
 
   <!-- ===== FORM ===== -->
   <div id="form">
     <label>ชื่อ-นามสกุล</label>
-    <input id="inputName" placeholder="กรอกชื่อ-นามสกุล" />
+    <input id="inputName" placeholder="กรอกชื่อ-นามสกุล" oninput="checkForm()" />
 
     <label>เบอร์โทรศัพท์</label>
     <input type="tel"
-    id="phone"
-    placeholder="กรอกเบอร์โทร 10 หลัก"
-    inputmode="numeric"
-    pattern="[0-9]{10}"
-    maxlength="10"
-    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"
-    required />
+      id="phone"
+      placeholder="กรอกเบอร์โทร 10 หลัก"
+      inputmode="numeric"
+      maxlength="10"
+      oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10); checkForm();"
+      required />
 
     <label>กิจกรรม</label>
-    <select id="activity" onchange="updateItems()">
+    <select id="activity" onchange="updateItems(); checkForm();">
       <option value="">-- เลือกกิจกรรม --</option>
     </select>
 
     <label>รายการ</label>
-    <select id="item"></select>
+    <select id="item" onchange="checkForm()">
+      <option value="">-- เลือกรายการ --</option>
+    </select>
 
-    <button onclick="submitForm()">บันทึกข้อมูล</button>
+    <button id="saveBtn" onclick="submitForm()" disabled>
+      บันทึกข้อมูล
+    </button>
   </div>
 
   <!-- ===== SUMMARY ===== -->
@@ -112,6 +129,7 @@ button:disabled {
 
     <button onclick="resetForm()">เพิ่มข้อมูลใหม่</button>
   </div>
+
 </div>
 
 <script>
@@ -124,7 +142,6 @@ let activities = [];
 async function init() {
   await liff.init({ liffId: LIFF_ID });
   if (!liff.isLoggedIn()) return liff.login();
-
   profile = await liff.getProfile();
   loadActivities();
 }
@@ -146,7 +163,7 @@ async function loadActivities() {
 function updateItems() {
   const act = activity.value;
   const itemSel = document.getElementById("item");
-  itemSel.innerHTML = "";
+  itemSel.innerHTML = `<option value="">-- เลือกรายการ --</option>`;
 
   activities
     .filter(a => a.activity === act)
@@ -157,13 +174,22 @@ function updateItems() {
     });
 }
 
+/* 🔒 ตรวจว่ากรอกครบหรือยัง */
+function checkForm() {
+  const ok =
+    inputName.value.trim() &&
+    phone.value.length === 10 &&
+    activity.value &&
+    item.value;
+
+  document.getElementById("saveBtn").disabled = !ok;
+}
+
 async function submitForm() {
   const btn = event.target;
   btn.disabled = true;
   btn.textContent = "กำลังบันทึก...";
 
-  const name = inputName.value;
-  const phoneVal = phone.value;
   const act = activity.value;
   const it = item.value;
 
@@ -174,11 +200,11 @@ async function submitForm() {
     userId: profile.userId,
     displayName: profile.displayName,
     profilename: "https://line.me/ti/p/~" + profile.userId,
-    inputName: name,
-    phone: phoneVal,
+    inputName: inputName.value,
+    phone: phone.value,
     activity: act,
     item: it,
-    travelTime: travelTime
+    travelTime
   };
 
   await fetch(GAS_URL, {
@@ -190,8 +216,8 @@ async function submitForm() {
   summary.style.display = "block";
 
   sumText.innerHTML = `
-    👤 ${name}<br>
-    📞 ${phoneVal}<br>
+    👤 ${inputName.value}<br>
+    📞 ${phone.value}<br>
     🎯 ${act}<br>
     📦 ${it}<br>
     🕒 ออกเดินทางเวลา ${travelTime}
