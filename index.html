@@ -81,7 +81,14 @@ button:disabled {
     <input id="inputName" placeholder="กรอกชื่อ-นามสกุล" />
 
     <label>เบอร์โทรศัพท์</label>
-    <input id="phone" type="tel" inputmode="numeric" maxlength="10" />
+    <input type="tel"
+    id="phone"
+    placeholder="กรอกเบอร์โทร 10 หลัก"
+    inputmode="numeric"
+    pattern="[0-9]{10}"
+    maxlength="10"
+    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"
+    required />
 
     <label>กิจกรรม</label>
     <select id="activity" onchange="updateItems()">
