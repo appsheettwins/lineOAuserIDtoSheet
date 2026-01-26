@@ -197,15 +197,18 @@ async function submitForm() {
     activities.find(a => a.activity === act && a.item === it)?.travelTime || "-";
 
   const payload = {
-    userId: profile.userId,
-    displayName: profile.displayName,
-    profilename: "https://line.me/ti/p/~" + profile.userId,
-    inputName: inputName.value,
-    phone: phone.value,
-    activity: act,
-    item: it,
-    travelTime
-  };
+  userId: profile.userId,
+  displayName: profile.displayName,
+  pictureUrl: profile.pictureUrl || "",
+  statusMessage: profile.statusMessage || "",
+
+  inputName: name,
+  phone: phoneVal,
+  activity: act,
+  item: it,
+  travelTime: travelTime
+};
+
 
   await fetch(GAS_URL, {
     method: "POST",
