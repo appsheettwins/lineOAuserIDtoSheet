@@ -61,6 +61,12 @@ button:disabled {
   font-size:22px;
   color:#00c853;
   font-weight:bold;
+  margin-bottom:12px;
+}
+.summary-box {
+  margin-top:10px;
+  font-size:18px;
+  line-height:1.6;
 }
 </style>
 </head>
@@ -69,6 +75,7 @@ button:disabled {
 <div class="card">
   <h1>สำรองที่นั่งร่วมกิจกรรมธรรมยาตรา</h1>
 
+  <!-- ===== FORM ===== -->
   <div id="form">
     <label>ชื่อ-นามสกุล</label>
     <input id="inputName" placeholder="กรอกชื่อ-นามสกุล" />
@@ -87,9 +94,15 @@ button:disabled {
     <button onclick="submitForm()">บันทึกข้อมูล</button>
   </div>
 
+  <!-- ===== SUMMARY ===== -->
   <div id="summary">
-    <div class="success">✅ บันทึกสำเร็จ<br>รอข้อความยืนยันสำรองที่นั่ง</div>
-    <p id="sumText"></p>
+    <div class="success">
+      ✅ บันทึกสำเร็จ<br>
+      รอข้อความยืนยันสำรองที่นั่ง
+    </div>
+
+    <div id="sumText" class="summary-box"></div>
+
     <button onclick="resetForm()">เพิ่มข้อมูลใหม่</button>
   </div>
 </div>
@@ -115,9 +128,10 @@ async function loadActivities() {
 
   const actSet = [...new Set(activities.map(a => a.activity))];
   const sel = document.getElementById("activity");
-  actSet.forEach(a=>{
-    const o=document.createElement("option");
-    o.value=o.textContent=a;
+
+  actSet.forEach(a => {
+    const o = document.createElement("option");
+    o.value = o.textContent = a;
     sel.appendChild(o);
   });
 }
@@ -126,11 +140,12 @@ function updateItems() {
   const act = document.getElementById("activity").value;
   const itemSel = document.getElementById("item");
   itemSel.innerHTML = "";
+
   activities
-    .filter(a=>a.activity===act)
-    .forEach(a=>{
-      const o=document.createElement("option");
-      o.value=o.textContent=a.item;
+    .filter(a => a.activity === act)
+    .forEach(a => {
+      const o = document.createElement("option");
+      o.value = o.textContent = a.item;
       itemSel.appendChild(o);
     });
 }
@@ -140,33 +155,43 @@ async function submitForm() {
   btn.disabled = true;
   btn.textContent = "กำลังบันทึก...";
 
-  const act = document.getElementById("activity").value;
-  const it = document.getElementById("item").value;
-  const travel = activities.find(a=>a.activity===act && a.item===it)?.travelTime || "-";
+  const name = inputName.value;
+  const phoneVal = phone.value;
+  const act = activity.value;
+  const it = item.value;
+
+  const travel =
+    activities.find(a => a.activity === act && a.item === it)?.travelTime || "-";
 
   const payload = {
     userId: profile.userId,
     displayName: profile.displayName,
     profilename: "https://line.me/ti/p/~" + profile.userId,
-    inputName: inputName.value,
-    phone: phone.value,
+    inputName: name,
+    phone: phoneVal,
     activity: act,
     item: it,
     travelTime: travel
   };
 
-  await fetch(GAS_URL,{
-    method:"POST",
-    body:JSON.stringify(payload)
+  await fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
   });
 
-  document.getElementById("form").style.display="none";
-  document.getElementById("summary").style.display="block";
-  document.getElementById("sumText").innerHTML =
-    `🎯 ${act}<br>📦 ${it}<br>🕒 ${travel}`;
+  document.getElementById("form").style.display = "none";
+  document.getElementById("summary").style.display = "block";
+
+  document.getElementById("sumText").innerHTML = `
+    👤 ${name}<br>
+    📞 ${phoneVal}<br>
+    🎯 ${act}<br>
+    📦 ${it}<br>
+    🕒 ${travel}
+  `;
 }
 
-function resetForm(){
+function resetForm() {
   location.reload();
 }
 
