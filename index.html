@@ -493,7 +493,7 @@ body {
       <input 
         type="tel" 
         id="searchPhone" 
-        placeholder="กรอกเบอร์โทรศัพท์ที่ต้องการค้นหา (10 หลัก)" 
+        placeholder="กรอกเบอร์โทรศัพท์ที่ต้องการค้นหา (9-10 หลัก)" 
         inputmode="numeric"
         maxlength="10"
         oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10);"
@@ -549,40 +549,67 @@ async function init() {
 }
 
 async function loadActivities() {
-  const res = await fetch(GAS_URL + "?mode=activity");
-  activities = await res.json();
+  try {
+    const res = await fetch(GAS_URL + "?mode=activity");
+    if (!res.ok) {
+      console.error('Failed to load activities:', res.status);
+      return;
+    }
+    
+    activities = await res.json();
+    console.log('Activities loaded:', activities);
 
-  const actSet = [...new Set(activities.map(a => a.activity))];
-  const sel = document.getElementById("activity");
+    const actSet = [...new Set(activities.map(a => a.activity))];
+    const sel = document.getElementById("activity");
 
-  actSet.forEach(a => {
-    const o = document.createElement("option");
-    o.value = o.textContent = a;
-    sel.appendChild(o);
-  });
+    // ล้าง options เดิม (ยกเว้น option แรก)
+    while (sel.options.length > 1) {
+      sel.remove(1);
+    }
+
+    actSet.forEach(a => {
+      const o = document.createElement("option");
+      o.value = o.textContent = a;
+      sel.appendChild(o);
+    });
+    
+    console.log('Activity options updated:', actSet);
+  } catch (error) {
+    console.error('Error loading activities:', error);
+  }
 }
 
 function updateItems() {
-  const act = activity.value;
+  const act = document.getElementById("activity").value;
   const itemSel = document.getElementById("item");
-  itemSel.innerHTML = `<option value="">-- เลือกรายการ --</option>`;
+  
+  // ล้าง options เดิม (ยกเว้น option แรก)
+  while (itemSel.options.length > 1) {
+    itemSel.remove(1);
+  }
 
-  activities
-    .filter(a => a.activity === act)
-    .forEach(a => {
-      const o = document.createElement("option");
-      o.value = o.textContent = a.item;
-      itemSel.appendChild(o);
-    });
+  if (!act) return;
+
+  const filteredItems = activities.filter(a => a.activity === act);
+  
+  console.log('Filtered items for', act, ':', filteredItems);
+  
+  filteredItems.forEach(a => {
+    const o = document.createElement("option");
+    o.value = a.item;
+    o.textContent = a.item;
+    itemSel.appendChild(o);
+  });
 }
 
 /* 🔒 ตรวจว่ากรอกครบหรือยัง */
 function checkForm() {
-  const ok =
-    inputName.value.trim() &&
-    phone.value.length === 10 &&
-    activity.value &&
-    item.value;
+  const inputName = document.getElementById('inputName').value.trim();
+  const phone = document.getElementById('phone').value;
+  const activity = document.getElementById('activity').value;
+  const item = document.getElementById('item').value;
+  
+  const ok = inputName && phone.length === 10 && activity && item;
 
   document.getElementById("saveBtn").disabled = !ok;
   
@@ -603,45 +630,52 @@ async function submitForm() {
   btn.disabled = true;
   btn.textContent = "กำลังบันทึก...";
 
-  const act = activity.value;
-  const it = item.value;
+  const inputName = document.getElementById('inputName').value;
+  const phone = document.getElementById('phone').value;
+  const activity = document.getElementById('activity').value;
+  const item = document.getElementById('item').value;
 
-  const travelTime =
-    activities.find(a => a.activity === act && a.item === it)?.travelTime || "-";
+  const travelTime = activities.find(a => a.activity === activity && a.item === item)?.travelTime || "-";
 
   const payload = {
     userId: profile.userId,
     displayName: profile.displayName,
     profilename: "https://line.me/ti/p/~" + profile.userId,
-    inputName: inputName.value,
-    phone: phone.value,
-    activity: act,
-    item: it,
-    travelTime
+    inputName: inputName,
+    phone: phone,
+    activity: activity,
+    item: item,
+    travelTime: travelTime
   };
 
-  await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
+  try {
+    await fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
 
-  // แสดงผลสรุป
-  form.style.display = "none";
-  summary.style.display = "block";
+    // แสดงผลสรุป
+    document.getElementById('form').style.display = "none";
+    document.getElementById('summary').style.display = "block";
 
-  sumText.innerHTML = `
-    <div><span style="color: #ff6a00; margin-right: 8px;">👤</span> <strong>${inputName.value}</strong></div>
-    <div><span style="color: #4facfe; margin-right: 8px;">📞</span> ${phone.value}</div>
-    <div><span style="color: #ff2d55; margin-right: 8px;">🎯</span> ${act}</div>
-    <div><span style="color: #34c759; margin-right: 8px;">📦</span> ${it}</div>
-    <div><span style="color: #00c853; margin-right: 8px;">🕒</span> ออกเดินทางเวลา ${travelTime}</div>
-  `;
-  
-  // รีเซ็ตปุ่ม
-  btn.textContent = originalText;
+    document.getElementById('sumText').innerHTML = `
+      <div><span style="color: #ff6a00; margin-right: 8px;">👤</span> <strong>${inputName}</strong></div>
+      <div><span style="color: #4facfe; margin-right: 8px;">📞</span> ${phone}</div>
+      <div><span style="color: #ff2d55; margin-right: 8px;">🎯</span> ${activity}</div>
+      <div><span style="color: #34c759; margin-right: 8px;">📦</span> ${item}</div>
+      <div><span style="color: #00c853; margin-right: 8px;">🕒</span> ออกเดินทางเวลา ${travelTime}</div>
+    `;
+    
+  } catch (error) {
+    console.error('Error submitting form:', error);
+    alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่');
+  } finally {
+    // รีเซ็ตปุ่ม
+    btn.textContent = originalText;
+  }
 }
 
-// ฟังก์ชันค้นหาข้อมูล
+// ฟังก์ชันค้นหาข้อมูล - แก้ไขแล้ว
 async function searchData() {
   const searchPhone = document.getElementById('searchPhone').value.trim();
   
@@ -649,30 +683,6 @@ async function searchData() {
     alert('กรุณากรอกเบอร์โทรศัพท์ 9-10 หลัก');
     return;
   }
-  
-  // ลองค้นหาทั้งสองรูปแบบ
-  const phonesToTry = [searchPhone];
-  
-  if (searchPhone.length === 10 && searchPhone.startsWith('0')) {
-    // ถ้าเป็น 10 หลักและเริ่มด้วย 0 -> ลองตัด 0 ออก
-    phonesToTry.push(searchPhone.substring(1));
-  } else if (searchPhone.length === 9) {
-    // ถ้าเป็น 9 หลัก -> ลองเติม 0 ด้านหน้า
-    phonesToTry.push('0' + searchPhone);
-  }
-  
-  // ลองค้นหาทุกรูปแบบจนกว่าจะเจอ
-  for (const phone of phonesToTry) {
-    const results = await searchWithPhone(phone);
-    if (results.length > 0) {
-      displayResults(results);
-      return;
-    }
-  }
-  
-  // ถ้าไม่เจอเลย
-  showNoResults();
-}
   
   const resultsContainer = document.getElementById('searchResults');
   resultsContainer.innerHTML = `
@@ -687,6 +697,8 @@ async function searchData() {
     const response = await fetch(GAS_URL + `?mode=search&phone=${searchPhone}`);
     const data = await response.json();
     
+    console.log('Search response:', data);
+    
     if (data.error) {
       resultsContainer.innerHTML = `
         <div class="no-results">
@@ -697,49 +709,28 @@ async function searchData() {
       return;
     }
     
-    if (!data || data.length === 0) {
+    if (!data.success) {
+      resultsContainer.innerHTML = `
+        <div class="no-results">
+          <div class="no-results-icon">⚠️</div>
+          <p>${data.message || 'ไม่พบข้อมูล'}</p>
+        </div>
+      `;
+      return;
+    }
+    
+    if (!data.results || data.results.length === 0) {
       resultsContainer.innerHTML = `
         <div class="no-results">
           <div class="no-results-icon">🔍</div>
-          <p>ไม่พบข้อมูลการสำรองที่นั่งสำหรับเบอร์ ${searchPhone}</p>
+          <p>${data.message || 'ไม่พบข้อมูลการสำรองที่นั่งสำหรับเบอร์ ' + searchPhone}</p>
         </div>
       `;
       return;
     }
     
     // แสดงผลลัพธ์
-    let resultsHTML = '';
-    
-    data.forEach((item, index) => {
-      resultsHTML += `
-        <div class="result-item">
-          <div class="result-header">
-            <div class="result-name">${item.inputName || 'ไม่มีข้อมูล'}</div>
-            <div class="result-phone">${item.phone || searchPhone}</div>
-          </div>
-          <div class="result-details">
-            <div class="detail-item">
-              <span class="detail-label">กิจกรรม</span>
-              <span class="detail-value">${item.activity || 'ไม่มีข้อมูล'}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">รายการ</span>
-              <span class="detail-value">${item.item || 'ไม่มีข้อมูล'}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">เวลาออกเดินทาง</span>
-              <span class="detail-value">${item.travelTime || 'ไม่มีข้อมูล'}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">วันที่บันทึก</span>
-              <span class="detail-value">${item.timestamp ? new Date(item.timestamp).toLocaleDateString('th-TH') : 'ไม่มีข้อมูล'}</span>
-            </div>
-          </div>
-        </div>
-      `;
-    });
-    
-    resultsContainer.innerHTML = resultsHTML;
+    displayResults(data.results);
     
   } catch (error) {
     console.error('Error searching data:', error);
@@ -747,9 +738,83 @@ async function searchData() {
       <div class="no-results">
         <div class="no-results-icon">⚠️</div>
         <p>เกิดข้อผิดพลาดในการค้นหา กรุณาลองใหม่</p>
+        <p style="font-size: 14px; color: #999;">${error.message}</p>
       </div>
     `;
   }
+}
+
+// ฟังก์ชันแสดงผลลัพธ์
+function displayResults(results) {
+  const resultsContainer = document.getElementById('searchResults');
+  
+  if (!results || results.length === 0) {
+    resultsContainer.innerHTML = `
+      <div class="no-results">
+        <div class="no-results-icon">🔍</div>
+        <p>ไม่พบข้อมูลการสำรองที่นั่ง</p>
+      </div>
+    `;
+    return;
+  }
+  
+  let resultsHTML = '';
+  
+  results.forEach((item, index) => {
+    // จัดรูปแบบวันที่
+    let formattedDate = 'ไม่มีข้อมูล';
+    if (item.timestamp) {
+      try {
+        const date = new Date(item.timestamp);
+        formattedDate = date.toLocaleDateString('th-TH', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (e) {
+        formattedDate = item.timestamp;
+      }
+    }
+    
+    resultsHTML += `
+      <div class="result-item">
+        <div class="result-header">
+          <div class="result-name">${item.inputName || 'ไม่มีข้อมูล'}</div>
+          <div class="result-phone">${item.phone || 'ไม่มีข้อมูล'}</div>
+        </div>
+        <div class="result-details">
+          <div class="detail-item">
+            <span class="detail-label">กิจกรรม</span>
+            <span class="detail-value">${item.activity || 'ไม่มีข้อมูล'}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">รายการ</span>
+            <span class="detail-value">${item.item || 'ไม่มีข้อมูล'}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">เวลาออกเดินทาง</span>
+            <span class="detail-value">${item.travelTime || 'ไม่มีข้อมูล'}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">วันที่บันทึก</span>
+            <span class="detail-value">${formattedDate}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  // เพิ่มข้อความสรุปจำนวนผลลัพธ์
+  resultsHTML = `
+    <div style="text-align: center; margin-bottom: 15px; color: #666; font-size: 14px;">
+      พบ ${results.length} รายการ
+    </div>
+    ${resultsHTML}
+  `;
+  
+  resultsContainer.innerHTML = resultsHTML;
 }
 
 // ฟังก์ชันรีเซ็ตฟอร์ม
@@ -778,6 +843,20 @@ document.getElementById('searchPhone').addEventListener('keypress', function(e) 
   if (e.key === 'Enter') {
     searchData();
   }
+});
+
+// เพิ่ม event listener สำหรับ debug
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded');
+  
+  // ตรวจสอบว่าฟังก์ชันถูกโหลดหรือไม่
+  console.log('Functions available:', {
+    init: typeof init,
+    loadActivities: typeof loadActivities,
+    updateItems: typeof updateItems,
+    searchData: typeof searchData,
+    displayResults: typeof displayResults
+  });
 });
 
 init();
