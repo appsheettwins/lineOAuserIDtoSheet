@@ -730,34 +730,74 @@ async function submitForm() {
     console.log('Submitting form data:', payload);
     
     // ใช้ no-cors สำหรับการ submit
-    await fetch(GAS_URL, {
+    // ในหน้า HTML ให้แก้ไขฟังก์ชัน submitForm() เป็นดังนี้:
+async function submitForm() {
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "กำลังบันทึก...";
+
+  const inputName = document.getElementById('inputName').value;
+  const phone = document.getElementById('phone').value;
+  const activity = document.getElementById('activity').value;
+  const item = document.getElementById('item').value;
+
+  const travelTime = activities.find(a => a.activity === activity && a.item === item)?.travelTime || "-";
+
+  const payload = {
+    userId: profile.userId,
+    displayName: profile.displayName,
+    profilename: "https://line.me/ti/p/~" + profile.userId,
+    inputName: inputName,
+    phone: phone,
+    activity: activity,
+    item: item,
+    travelTime: travelTime
+  };
+
+  console.log('Submitting form data:', payload);
+
+  try {
+    // ส่งข้อมูลไปยัง GAS
+    const response = await fetch(GAS_URL, {
       method: "POST",
-      mode: 'no-cors',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
 
-    // แสดงผลสรุป
-    document.getElementById('form').style.display = "none";
-    document.getElementById('summary').style.display = "block";
-
-    document.getElementById('sumText').innerHTML = `
-      <div><span style="color: #ff6a00; margin-right: 8px;">👤</span> <strong>${inputName}</strong></div>
-      <div><span style="color: #4facfe; margin-right: 8px;">📞</span> ${phone}</div>
-      <div><span style="color: #ff2d55; margin-right: 8px;">🎯</span> ${activity}</div>
-      <div><span style="color: #34c759; margin-right: 8px;">📦</span> ${item}</div>
-      <div><span style="color: #00c853; margin-right: 8px;">🕒</span> ออกเดินทางเวลา ${travelTime}</div>
-    `;
+    console.log('Response status:', response.status);
     
-    console.log('Form submitted successfully');
+    const result = await response.json();
+    console.log('Response data:', result);
+
+    if (result.success) {
+      // แสดงผลสรุป
+      document.getElementById('form').style.display = "none";
+      document.getElementById('summary').style.display = "block";
+
+      document.getElementById('sumText').innerHTML = `
+        <div><span style="color: #ff6a00; margin-right: 8px;">👤</span> <strong>${inputName}</strong></div>
+        <div><span style="color: #4facfe; margin-right: 8px;">📞</span> ${phone}</div>
+        <div><span style="color: #ff2d55; margin-right: 8px;">🎯</span> ${activity}</div>
+        <div><span style="color: #34c759; margin-right: 8px;">📦</span> ${item}</div>
+        <div><span style="color: #00c853; margin-right: 8px;">🕒</span> ออกเดินทางเวลา ${travelTime}</div>
+        <div style="margin-top: 15px; font-size: 14px; color: #666;">
+          ✅ บันทึกลงระบบสำเร็จ
+        </div>
+      `;
+      
+      console.log('Form submitted successfully');
+    } else {
+      alert('บันทึกข้อมูลไม่สำเร็จ: ' + (result.error || 'โปรดลองใหม่'));
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
     
   } catch (error) {
     console.error('Error submitting form:', error);
     alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่');
-  } finally {
-    // รีเซ็ตปุ่ม
     btn.disabled = false;
     btn.textContent = originalText;
   }
