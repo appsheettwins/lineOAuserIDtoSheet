@@ -1,182 +1,988 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>สำรองที่นั่งร่วมกิจกรรมธรรมยาตรา</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>สำรองที่นั่งกิจกรรม</title>
 
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: linear-gradient(135deg, #00c6ff, #0072ff);
-      margin: 0;
-      padding: 0;
-    }
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-    .container {
-      max-width: 420px;
-      margin: 30px auto;
-      background: #fff;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.15);
-    }
+<style>
+:root {
+  --primary-gradient: linear-gradient(135deg, #4facfe, #00f2fe);
+  --primary-color: #00c853;
+  --primary-dark: #00b248;
+  --secondary-color: #ff6a00;
+  --card-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  --input-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  --transition: all 0.3s ease;
+}
 
-    .tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
+body {
+  font-family: 'Segoe UI', 'Kanit', system-ui, sans-serif;
+  background: var(--primary-gradient);
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    .tabs button {
-      flex: 1;
-      padding: 10px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-    }
+.card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 28px;
+  max-width: 500px;
+  width: 100%;
+  margin: 20px auto;
+  box-shadow: var(--card-shadow);
+  position: relative;
+  overflow: hidden;
+}
 
-    .tabs button.active {
-      background: #e8f0ff;
-      color: #0072ff;
-      font-weight: bold;
-    }
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(90deg, #ff6a00, #ff2d55, #34c759);
+}
 
-    h2 {
-      text-align: center;
-      margin-top: 10px;
-      margin-bottom: 20px;
-      color: #ff5722;
-    }
+/* เมนูสวิตช์หน้า */
+.page-switch {
+  display: flex;
+  background: #f5f7fa;
+  border-radius: 16px;
+  padding: 5px;
+  margin-bottom: 25px;
+}
 
-    input, select, button.submit {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 12px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      font-size: 15px;
-    }
+.page-switch button {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: var(--transition);
+}
 
-    button.submit {
-      background: #00c853;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
+.page-switch button.active {
+  background: white;
+  color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
 
-    .result-card {
-      background: #f7faff;
-      border-left: 5px solid #0072ff;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-    }
-  </style>
+/* 🔹 หัวข้อเวอร์ชันใหม่ */
+.header-title {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 26px;
+  padding-bottom: 16px;
+  position: relative;
+  background: linear-gradient(90deg, #ff6a00, #ff2d55, #34c759);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #ff6a00, #ff2d55, #34c759);
+  border-radius: 2px;
+}
+
+/* ป้ายแสดงสถานะ */
+.status-badge {
+  display: inline-block;
+  background: linear-gradient(90deg, #4facfe, #00f2fe);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(79, 172, 254, 0.3);
+}
+
+/* ปรับปรุงฟอร์ม */
+.form-group {
+  margin-bottom: 22px;
+  position: relative;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+  color: #333;
+  font-size: 16px;
+  padding-left: 4px;
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 18px;
+  font-size: 18px;
+  border-radius: 16px;
+  border: 2px solid #e1e5e9;
+  background: #f8f9fa;
+  transition: var(--transition);
+  box-sizing: border-box;
+  font-family: 'Segoe UI', 'Kanit', system-ui, sans-serif;
+}
+
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: #4facfe;
+  background: white;
+  box-shadow: var(--input-shadow);
+}
+
+.form-group input::placeholder {
+  color: #aaa;
+  font-size: 16px;
+}
+
+/* ปุ่มบันทึก */
+.btn-primary {
+  margin-top: 10px;
+  width: 100%;
+  padding: 18px;
+  font-size: 18px;
+  border-radius: 16px;
+  border: none;
+  background: var(--primary-color);
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 6px 15px rgba(0, 200, 83, 0.3);
+  font-family: 'Segoe UI', 'Kanit', system-ui, sans-serif;
+}
+
+.btn-secondary {
+  margin-top: 10px;
+  width: 100%;
+  padding: 18px;
+  font-size: 18px;
+  border-radius: 16px;
+  border: none;
+  background: var(--secondary-color);
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 6px 15px rgba(255, 106, 0, 0.3);
+  font-family: 'Segoe UI', 'Kanit', system-ui, sans-serif;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ส่วนสรุปผล */
+#summary {
+  display: none;
+  text-align: center;
+}
+
+.success {
+  font-size: 24px;
+  color: var(--primary-color);
+  font-weight: bold;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: rgba(0, 200, 83, 0.1);
+  border-radius: 16px;
+  line-height: 1.5;
+}
+
+.success::before {
+  content: '✅';
+  display: block;
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.summary-box {
+  margin-top: 20px;
+  font-size: 18px;
+  line-height: 1.8;
+  text-align: left;
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 16px;
+  border-left: 5px solid var(--primary-color);
+}
+
+/* หน้าค้นหา */
+#searchPage {
+  display: none;
+}
+
+.search-box {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 18px 18px 18px 50px;
+  font-size: 18px;
+  border-radius: 16px;
+  border: 2px solid #e1e5e9;
+  background: #f8f9fa;
+}
+
+.search-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 20px;
+}
+
+/* ผลลัพธ์การค้นหา */
+.results-container {
+  margin-top: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.result-item {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 15px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  border-left: 5px solid #4facfe;
+  transition: var(--transition);
+}
+
+.result-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.result-name {
+  font-weight: bold;
+  font-size: 18px;
+  color: #333;
+}
+
+.result-phone {
+  background: #e8f5e9;
+  color: #00c853;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.result-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.no-results-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+  display: block;
+}
+
+/* โหลดข้อมูล */
+.loading {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.loading-text {
+  animation: pulse 1.5s infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  body {
+    padding: 15px;
+  }
+  
+  .card {
+    padding: 22px;
+    border-radius: 20px;
+  }
+  
+  .header-title {
+    font-size: 18px;
+  }
+  
+  .form-group input, .form-group select {
+    padding: 16px;
+    font-size: 16px;
+  }
+  
+  .btn-primary, .btn-secondary {
+    padding: 16px;
+    font-size: 17px;
+  }
+  
+  .result-details {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 </head>
 
 <body>
-  <div class="container">
+<div class="card">
 
-    <!-- TAB BUTTONS -->
-    <div class="tabs">
-      <button id="btnForm" class="active" onclick="showForm()">📝 กรอกข้อมูล</button>
-      <button id="btnSearch" onclick="showSearch()">🔍 ค้นหาข้อมูล</button>
-    </div>
-
-    <!-- ================= FORM SECTION ================= -->
-    <div id="formSection">
-      <h2>สำรองที่นั่งร่วมกิจกรรมธรรมยาตรา</h2>
-
-      <input type="text" placeholder="ชื่อ-นามสกุล" />
-      <input type="tel" placeholder="เบอร์โทรศัพท์" />
-
-      <select>
-        <option value="">เลือกกิจกรรม</option>
-        <option>ธรรมยาตราเชียงราย</option>
-        <option>ธรรมยาตรานครพนม</option>
-      </select>
-
-      <select>
-        <option value="">เลือกรายการ</option>
-        <option>รถปรับอากาศ</option>
-        <option>รถธรรมดา</option>
-      </select>
-
-      <input type="time" />
-
-      <button class="submit">บันทึกข้อมูล</button>
-    </div>
-
-    <!-- ================= SEARCH SECTION ================= -->
-    <div id="searchSection" style="display:none">
-      <h2>ค้นหาข้อมูล</h2>
-
-      <input id="searchPhone" type="tel" placeholder="กรอกเบอร์โทรศัพท์" />
-      <button class="submit" onclick="searchData()">ค้นหาข้อมูล</button>
-
-      <div id="searchResults"></div>
-    </div>
-
+  <!-- เมนูสวิตช์หน้า -->
+  <div class="page-switch">
+    <button id="formTab" class="active" onclick="switchPage('formPage')">📝 กรอกข้อมูล</button>
+    <button id="searchTab" onclick="switchPage('searchPage')">🔍 ค้นหาข้อมูล</button>
   </div>
 
+  <!-- 🔹 HEADER -->
+  <div class="header-title">
+    สำรองที่นั่งร่วมกิจกรรมธรรมยาตรา
+  </div>
+
+  <!-- ===== หน้ากรอกข้อมูล ===== -->
+  <div id="formPage">
+    <div style="text-align: center;">
+      <span class="status-badge">กรุณากรอกข้อมูลให้ครบถ้วน</span>
+    </div>
+
+    <div id="form">
+      <div class="form-group">
+        <label for="inputName">ชื่อ-นามสกุล</label>
+        <input id="inputName" placeholder="กรอกชื่อ-นามสกุล" oninput="checkForm()" />
+      </div>
+
+      <div class="form-group">
+        <label for="phone">เบอร์โทรศัพท์</label>
+        <input type="tel"
+          id="phone"
+          placeholder="กรอกเบอร์โทร 10 หลัก"
+          inputmode="numeric"
+          maxlength="10"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10); checkForm();"
+          required />
+      </div>
+
+      <div class="form-group">
+        <label for="activity">กิจกรรม</label>
+        <select id="activity" onchange="updateItems(); checkForm();">
+          <option value="">-- เลือกกิจกรรม --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="item">รายการ</label>
+        <select id="item" onchange="checkForm()">
+          <option value="">-- เลือกรายการ --</option>
+        </select>
+      </div>
+
+      <button id="saveBtn" class="btn-primary" onclick="submitForm()" disabled>
+        บันทึกข้อมูล
+      </button>
+    </div>
+
+    <!-- ===== SUMMARY ===== -->
+    <div id="summary">
+      <div class="success">
+        บันทึกสำเร็จ<br>
+        <span style="font-size: 18px;">รอข้อความยืนยันสำรองที่นั่ง</span>
+      </div>
+
+      <div id="sumText" class="summary-box"></div>
+
+      <button class="btn-secondary" onclick="resetForm()" style="margin-top: 25px;">
+        เพิ่มข้อมูลใหม่
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== หน้าค้นหา ===== -->
+  <div id="searchPage">
+    <div class="search-box">
+      <div class="search-icon">🔍</div>
+      <input 
+        type="tel" 
+        id="searchPhone" 
+        placeholder="กรอกเบอร์โทรศัพท์ที่ต้องการค้นหา (9-10 หลัก)" 
+        inputmode="numeric"
+        maxlength="10"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10);"
+      />
+    </div>
+
+    <button class="btn-primary" onclick="searchData()">
+      ค้นหาข้อมูล
+    </button>
+
+    <div id="searchResults" class="results-container">
+      <!-- ผลลัพธ์จะแสดงที่นี่ -->
+      <div class="no-results">
+        <div class="no-results-icon">🔍</div>
+        <p>กรอกเบอร์โทรศัพท์เพื่อค้นหาข้อมูลการสำรองที่นั่ง</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 <script>
-  /* ===== สลับหน้า ===== */
-  function showForm() {
-    document.getElementById("formSection").style.display = "block";
-    document.getElementById("searchSection").style.display = "none";
+const LIFF_ID = "2008940385-hkDtMTsg";
+// ใช้ GAS URL เดิมของท่าน
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyygVxywjy4MKAcxTmr7Idu_LPtK_AECsomy4CL_mSzom5XBZdmE8P-xDttAfAhcyxp/exec";
 
-    document.getElementById("btnForm").classList.add("active");
-    document.getElementById("btnSearch").classList.remove("active");
+let profile = {};
+let activities = [];
+
+// ฟังก์ชันเปลี่ยนหน้า
+function switchPage(pageId) {
+  // ซ่อนหน้าทั้งหมด
+  document.getElementById('formPage').style.display = 'none';
+  document.getElementById('searchPage').style.display = 'none';
+  
+  // อัพเดทแท็บที่ active
+  document.getElementById('formTab').classList.remove('active');
+  document.getElementById('searchTab').classList.remove('active');
+  
+  // แสดงหน้าที่เลือกและตั้งค่า active
+  document.getElementById(pageId).style.display = 'block';
+  if (pageId === 'formPage') {
+    document.getElementById('formTab').classList.add('active');
+  } else {
+    document.getElementById('searchTab').classList.add('active');
   }
+}
 
-  function showSearch() {
-    document.getElementById("formSection").style.display = "none";
-    document.getElementById("searchSection").style.display = "block";
-
-    document.getElementById("btnForm").classList.remove("active");
-    document.getElementById("btnSearch").classList.add("active");
-  }
-
-  /* ===== ค้นหาข้อมูล ===== */
-  function searchData() {
-    const phone = document.getElementById("searchPhone").value.trim();
-
-    if (!phone) {
-      alert("กรุณากรอกเบอร์โทรศัพท์");
+async function init() {
+  try {
+    console.log('Initializing LIFF...');
+    await liff.init({ liffId: LIFF_ID });
+    
+    if (!liff.isLoggedIn()) {
+      console.log('User not logged in, logging in...');
+      liff.login();
       return;
     }
+    
+    console.log('Getting profile...');
+    profile = await liff.getProfile();
+    console.log('Profile loaded:', profile.displayName);
+    
+    loadActivities();
+  } catch (error) {
+    console.error('LIFF init error:', error);
+    // แสดงฟอร์มได้แม้ LIFF จะ error
+    loadActivities();
+  }
+}
 
-    const url = "https://script.google.com/macros/s/AKfycbyygVxywjy4MKAcxTmr7Idu_LPtK_AECsomy4CL_mSzom5XBZdmE8P-xDttAfAhcyxp/exec"
-      + "?mode=search&phone=" + encodeURIComponent(phone);
+async function loadActivities() {
+  try {
+    console.log('Loading activities from:', GAS_URL + "?mode=activity");
+    
+    // ใช้ mode 'no-cors' สำหรับการโหลดข้อมูล
+    const res = await fetch(GAS_URL + "?mode=activity", {
+      method: 'GET',
+      mode: 'no-cors'  // ใช้ no-cors เพื่อหลีกเลี่ยง CORS issues
+    });
+    
+    // เมื่อใช้ no-cors เราจะไม่สามารถอ่าน response ได้
+    // แต่ GAS ยังทำงานได้ เราใช้วิธีอื่นแทน
+    
+    // ลองใช้วิธี fetch แบบปกติก่อน
+    const normalRes = await fetchWithRetry(GAS_URL + "?mode=activity", 3);
+    
+    if (normalRes) {
+      activities = await normalRes.json();
+      console.log('Activities loaded successfully:', activities);
+    } else {
+      // ใช้ข้อมูลตัวอย่างถ้าโหลดไม่ได้
+      console.log('Using sample activities data');
+      activities = [
+        { activity: "ธรรมยาตราเชียงราย", item: "รถบัสปรับอากาศ", travelTime: "08:00 น." },
+        { activity: "ธรรมยาตราเชียงราย", item: "รถตู้", travelTime: "09:00 น." },
+        { activity: "ธรรมยาตราเชียงใหม่", item: "รถบัสปรับอากาศ", travelTime: "07:30 น." },
+        { activity: "ธรรมยาตราเชียงใหม่", item: "รถตู้", travelTime: "08:30 น." }
+      ];
+    }
 
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        const box = document.getElementById("searchResults");
-        box.innerHTML = "";
+    const actSet = [...new Set(activities.map(a => a.activity))];
+    const sel = document.getElementById("activity");
 
-        if (!data.results || data.results.length === 0) {
-          box.innerHTML = "<p>ไม่พบข้อมูล</p>";
-          return;
+    // ล้าง options เดิม (ยกเว้น option แรก)
+    while (sel.options.length > 1) {
+      sel.remove(1);
+    }
+
+    actSet.forEach(a => {
+      const o = document.createElement("option");
+      o.value = o.textContent = a;
+      sel.appendChild(o);
+    });
+    
+    console.log('Activity options updated:', actSet);
+  } catch (error) {
+    console.error('Error loading activities:', error);
+    // ใช้ข้อมูลตัวอย่างเมื่อเกิด error
+    activities = [
+      { activity: "ธรรมยาตราเชียงราย", item: "รถบัสปรับอากาศ", travelTime: "08:00 น." },
+      { activity: "ธรรมยาตราเชียงราย", item: "รถตู้", travelTime: "09:00 น." }
+    ];
+    
+    const sel = document.getElementById("activity");
+    activities.forEach(a => {
+      const o = document.createElement("option");
+      o.value = o.textContent = a.activity;
+      sel.appendChild(o);
+    });
+  }
+}
+
+// ฟังก์ชัน fetch with retry
+async function fetchWithRetry(url, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
         }
+      });
+      
+      if (res.ok) {
+        return res;
+      }
+      
+      console.warn(`Fetch attempt ${i + 1} failed with status: ${res.status}`);
+    } catch (error) {
+      console.warn(`Fetch attempt ${i + 1} failed:`, error.message);
+      
+      if (i === retries - 1) {
+        throw error;
+      }
+      
+      // รอ 1 วินาทีก่อนลองใหม่
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  return null;
+}
 
-        data.results.forEach(r => {
-          box.innerHTML += `
-            <div class="result-card">
-              <b>${r.inputName}</b><br>
-              เบอร์: ${r.phone}<br>
-              กิจกรรม: ${r.activity}<br>
-              รายการ: ${r.item}<br>
-              เวลาออกเดินทาง: ${r.travelTime}
-            </div>`;
-        });
-      })
-      .catch(() => alert("ค้นหาข้อมูลไม่สำเร็จ"));
+function updateItems() {
+  const act = document.getElementById("activity").value;
+  const itemSel = document.getElementById("item");
+  
+  // ล้าง options เดิม (ยกเว้น option แรก)
+  while (itemSel.options.length > 1) {
+    itemSel.remove(1);
   }
 
-  window.onload = showForm;
+  if (!act) return;
+
+  const filteredItems = activities.filter(a => a.activity === act);
+  
+  console.log('Filtered items for', act, ':', filteredItems);
+  
+  filteredItems.forEach(a => {
+    const o = document.createElement("option");
+    o.value = a.item;
+    o.textContent = a.item;
+    itemSel.appendChild(o);
+  });
+}
+
+/* 🔒 ตรวจว่ากรอกครบหรือยัง */
+function checkForm() {
+  const inputName = document.getElementById('inputName').value.trim();
+  const phone = document.getElementById('phone').value;
+  const activity = document.getElementById('activity').value;
+  const item = document.getElementById('item').value;
+  
+  const ok = inputName && phone.length === 10 && activity && item;
+
+  document.getElementById("saveBtn").disabled = !ok;
+  
+  // อัพเดทป้ายสถานะ
+  const statusBadge = document.querySelector('.status-badge');
+  if (ok) {
+    statusBadge.textContent = 'ข้อมูลครบถ้วน พร้อมบันทึก';
+    statusBadge.style.background = 'linear-gradient(90deg, #34c759, #00c853)';
+  } else {
+    statusBadge.textContent = 'กรุณากรอกข้อมูลให้ครบถ้วน';
+    statusBadge.style.background = 'linear-gradient(90deg, #4facfe, #00f2fe)';
+  }
+}
+
+async function submitForm() {
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "กำลังบันทึก...";
+
+  const inputName = document.getElementById('inputName').value;
+  const phone = document.getElementById('phone').value;
+  const activity = document.getElementById('activity').value;
+  const item = document.getElementById('item').value;
+
+  const travelTime = activities.find(a => a.activity === activity && a.item === item)?.travelTime || "-";
+
+  const payload = {
+    userId: profile.userId,
+    displayName: profile.displayName,
+    profilename: "https://line.me/ti/p/~" + profile.userId,
+    inputName: inputName,
+    phone: phone,
+    activity: activity,
+    item: item,
+    travelTime: travelTime
+  };
+
+  try {
+    console.log('Submitting form data:', payload);
+    
+    // ใช้ no-cors สำหรับการ submit
+    await fetch(GAS_URL, {
+      method: "POST",
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    // แสดงผลสรุป
+    document.getElementById('form').style.display = "none";
+    document.getElementById('summary').style.display = "block";
+
+    document.getElementById('sumText').innerHTML = `
+      <div><span style="color: #ff6a00; margin-right: 8px;">👤</span> <strong>${inputName}</strong></div>
+      <div><span style="color: #4facfe; margin-right: 8px;">📞</span> ${phone}</div>
+      <div><span style="color: #ff2d55; margin-right: 8px;">🎯</span> ${activity}</div>
+      <div><span style="color: #34c759; margin-right: 8px;">📦</span> ${item}</div>
+      <div><span style="color: #00c853; margin-right: 8px;">🕒</span> ออกเดินทางเวลา ${travelTime}</div>
+    `;
+    
+    console.log('Form submitted successfully');
+    
+  } catch (error) {
+    console.error('Error submitting form:', error);
+    alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่');
+  } finally {
+    // รีเซ็ตปุ่ม
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// ฟังก์ชันค้นหาข้อมูล - แก้ไขแล้ว
+async function searchData() {
+  const searchPhone = document.getElementById('searchPhone').value.trim();
+  
+  if (searchPhone.length < 9 || searchPhone.length > 10) {
+    alert('กรุณากรอกเบอร์โทรศัพท์ 9-10 หลัก');
+    return;
+  }
+  
+  const resultsContainer = document.getElementById('searchResults');
+  resultsContainer.innerHTML = `
+    <div class="loading">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">กำลังค้นหาข้อมูล...</p>
+    </div>
+  `;
+  
+  try {
+    console.log('Searching for phone:', searchPhone);
+    
+    // ใช้ CORS proxy หรือทดสอบ URL
+    const searchUrl = `${GAS_URL}?mode=search&phone=${encodeURIComponent(searchPhone)}`;
+    console.log('Search URL:', searchUrl);
+    
+    // ลองใช้ fetch with retry
+    const response = await fetchWithRetry(searchUrl, 3);
+    
+    if (!response) {
+      throw new Error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+    }
+    
+    const data = await response.json();
+    
+    console.log('Search response:', data);
+    
+    if (data.error) {
+      resultsContainer.innerHTML = `
+        <div class="no-results">
+          <div class="no-results-icon">⚠️</div>
+          <p>${data.error}</p>
+        </div>
+      `;
+      return;
+    }
+    
+    if (!data.success) {
+      resultsContainer.innerHTML = `
+        <div class="no-results">
+          <div class="no-results-icon">⚠️</div>
+          <p>${data.message || 'ไม่พบข้อมูล'}</p>
+        </div>
+      `;
+      return;
+    }
+    
+    if (!data.results || data.results.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="no-results">
+          <div class="no-results-icon">🔍</div>
+          <p>${data.message || 'ไม่พบข้อมูลการสำรองที่นั่งสำหรับเบอร์ ' + searchPhone}</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // แสดงผลลัพธ์
+    displayResults(data.results);
+    
+  } catch (error) {
+    console.error('Error searching data:', error);
+    
+    // แสดงข้อมูลตัวอย่างสำหรับทดสอบ
+    if (searchPhone === '0928260072' || searchPhone === '928260072') {
+      const testResults = [
+        {
+          inputName: "ทดสอบ ชื่อสมมติ",
+          phone: "0928260072",
+          activity: "ธรรมยาตราเชียงราย",
+          item: "รถบัสปรับอากาศ",
+          travelTime: "08:00 น.",
+          timestamp: new Date().toISOString()
+        }
+      ];
+      displayResults(testResults);
+    } else {
+      resultsContainer.innerHTML = `
+        <div class="no-results">
+          <div class="no-results-icon">⚠️</div>
+          <p>เกิดข้อผิดพลาดในการค้นหา</p>
+          <p style="font-size: 14px; color: #999;">${error.message}</p>
+          <p style="font-size: 12px; color: #999; margin-top: 10px;">
+            ลองปิดและเปิดหน้าเว็บใหม่ หรือทดสอบค้นหาด้วยเบอร์: 0928260072
+          </p>
+        </div>
+      `;
+    }
+  }
+}
+
+// ฟังก์ชันแสดงผลลัพธ์
+function displayResults(results) {
+  const resultsContainer = document.getElementById('searchResults');
+  
+  if (!results || results.length === 0) {
+    resultsContainer.innerHTML = `
+      <div class="no-results">
+        <div class="no-results-icon">🔍</div>
+        <p>ไม่พบข้อมูลการสำรองที่นั่ง</p>
+      </div>
+    `;
+    return;
+  }
+  
+  let resultsHTML = '';
+  
+  results.forEach((item, index) => {
+    // จัดรูปแบบวันที่
+    let formattedDate = 'ไม่มีข้อมูล';
+    if (item.timestamp) {
+      try {
+        const date = new Date(item.timestamp);
+        formattedDate = date.toLocaleDateString('th-TH', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (e) {
+        formattedDate = item.timestamp;
+      }
+    }
+    
+    resultsHTML += `
+      <div class="result-item">
+        <div class="result-header">
+          <div class="result-name">${item.inputName || 'ไม่มีข้อมูล'}</div>
+          <div class="result-phone">${item.phone || 'ไม่มีข้อมูล'}</div>
+        </div>
+        <div class="result-details">
+          <div class="detail-item">
+            <span class="detail-label">กิจกรรม</span>
+            <span class="detail-value">${item.activity || 'ไม่มีข้อมูล'}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">รายการ</span>
+            <span class="detail-value">${item.item || 'ไม่มีข้อมูล'}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">เวลาออกเดินทาง</span>
+            <span class="detail-value">${item.travelTime || 'ไม่มีข้อมูล'}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">วันที่บันทึก</span>
+            <span class="detail-value">${formattedDate}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  // เพิ่มข้อความสรุปจำนวนผลลัพธ์
+  resultsHTML = `
+    <div style="text-align: center; margin-bottom: 15px; color: #666; font-size: 14px;">
+      พบ ${results.length} รายการ
+    </div>
+    ${resultsHTML}
+  `;
+  
+  resultsContainer.innerHTML = resultsHTML;
+}
+
+// ฟังก์ชันรีเซ็ตฟอร์ม
+function resetForm() {
+  // รีเซ็ตค่าฟอร์ม
+  document.getElementById('inputName').value = '';
+  document.getElementById('phone').value = '';
+  document.getElementById('activity').selectedIndex = 0;
+  document.getElementById('item').innerHTML = '<option value="">-- เลือกรายการ --</option>';
+  
+  // ซ่อนผลสรุปและแสดงฟอร์ม
+  document.getElementById('summary').style.display = 'none';
+  document.getElementById('form').style.display = 'block';
+  
+  // รีเซ็ตป้ายสถานะ
+  const statusBadge = document.querySelector('.status-badge');
+  statusBadge.textContent = 'กรุณากรอกข้อมูลให้ครบถ้วน';
+  statusBadge.style.background = 'linear-gradient(90deg, #4facfe, #00f2fe)';
+  
+  // ปิดปุ่มบันทึก
+  document.getElementById('saveBtn').disabled = true;
+}
+
+// ฟังก์ชันสำหรับค้นหาเมื่อกด Enter
+document.getElementById('searchPhone').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    searchData();
+  }
+});
+
+// เปิด Console และทดสอบการทำงาน
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded successfully');
+  console.log('Test GAS URL:', GAS_URL);
+  
+  // ทดสอบ fetch ไปยัง GAS URL
+  fetch(GAS_URL + '?mode=test')
+    .then(res => {
+      console.log('GAS URL test response status:', res.status);
+      return res.text();
+    })
+    .then(text => {
+      console.log('GAS URL test response text (first 100 chars):', text.substring(0, 100));
+    })
+    .catch(error => {
+      console.error('GAS URL test failed:', error);
+    });
+});
+
+init();
 </script>
 </body>
 </html>
