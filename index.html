@@ -22,7 +22,7 @@ body {
   font-family: 'Segoe UI', 'Kanit', system-ui, sans-serif;
   background: var(--primary-gradient);
   margin: 0;
-  padding: 12px; /* ลด Padding ขอบจอ */
+  padding: 12px;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -52,12 +52,220 @@ body {
   background: linear-gradient(90deg, #ff6a00, #ff2d55, #34c759);
 }
 
+/* Search Button */
+.search-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+  transition: var(--transition);
+  z-index: 10;
+}
+
+.search-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(79, 172, 254, 0.5);
+}
+
+.search-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: white;
+}
+
+/* Search Modal */
+.search-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.search-modal.active {
+  display: flex;
+}
+
+.search-content {
+  background: white;
+  border-radius: 24px;
+  padding: 28px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.search-title {
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #4facfe, #00f2fe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f5f5f5;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.close-btn:hover {
+  background: #e0e0e0;
+}
+
+.search-input-group {
+  margin-bottom: 20px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  border-radius: 14px;
+  border: 2px solid #e1e5e9;
+  background: #f8f9fa;
+  transition: var(--transition);
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4facfe;
+  background: white;
+  box-shadow: var(--input-shadow);
+}
+
+.btn-search {
+  width: 100%;
+  padding: 16px;
+  font-size: 17px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+}
+
+.btn-search:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(79, 172, 254, 0.4);
+}
+
+.btn-search:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.search-results {
+  margin-top: 24px;
+}
+
+.result-item {
+  background: #f8f9fa;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 12px;
+  border-left: 4px solid var(--primary-color);
+  transition: var(--transition);
+}
+
+.result-item:hover {
+  background: #e8f5e9;
+  transform: translateX(4px);
+}
+
+.result-item div {
+  margin-bottom: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.result-item strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.no-results svg {
+  width: 64px;
+  height: 64px;
+  fill: #ddd;
+  margin-bottom: 16px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #4facfe;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .header-title {
   text-align: center;
-  font-size: 22px; /* ปรับขนาดหัวข้อ */
+  font-size: 22px;
   font-weight: 700;
   margin-bottom: 24px;
   padding-bottom: 16px;
+  padding-right: 50px;
   position: relative;
   background: linear-gradient(90deg, #ff6a00, #ff2d55, #34c759);
   -webkit-background-clip: text;
@@ -77,7 +285,6 @@ body {
   border-radius: 2px;
 }
 
-/* ป้ายสถานะ (แสดงเฉพาะหน้าแรก) */
 .status-badge {
   display: inline-block;
   background: linear-gradient(90deg, #4facfe, #00f2fe);
@@ -99,22 +306,21 @@ body {
   margin-bottom: 8px;
   display: block;
   color: #333;
-  font-size: 15px; /* ปรับขนาด Label ให้พอดี */
+  font-size: 15px;
   padding-left: 4px;
 }
 
-/* ปรับ Input ให้พิมพ์ง่ายบนมือถือ */
 .form-group input, .form-group select {
   width: 100%;
   padding: 16px; 
-  font-size: 16px; /* ป้องกัน iOS Auto-zoom */
+  font-size: 16px;
   border-radius: 14px;
   border: 2px solid #e1e5e9;
   background: #f8f9fa;
   transition: var(--transition);
   box-sizing: border-box;
   font-family: inherit;
-  -webkit-appearance: none; /* ลบสไตล์เดิมของ Safari */
+  -webkit-appearance: none;
 }
 
 .form-group input:focus, .form-group select:focus {
@@ -183,7 +389,7 @@ body {
 
 .summary-box {
   margin-top: 20px;
-  font-size: 17px; /* ปรับขนาดสรุปผลบนมือถือ */
+  font-size: 17px;
   line-height: 1.8;
   text-align: left;
   background: #fdfdfd;
@@ -201,12 +407,19 @@ body {
   .card { padding: 20px; }
   .header-title { font-size: 20px; }
   .btn-primary { padding: 16px; }
+  .search-content { padding: 20px; }
 }
 </style>
 </head>
 
 <body>
 <div class="card">
+  <!-- Search Button -->
+  <button class="search-btn" onclick="openSearchModal()">
+    <svg viewBox="0 0 24 24">
+      <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+    </svg>
+  </button>
 
   <div class="header-title">
     สำรองที่นั่งกิจกรรมธรรมยาตรา
@@ -267,6 +480,34 @@ body {
 
 </div>
 
+<!-- Search Modal -->
+<div id="searchModal" class="search-modal" onclick="closeSearchModal(event)">
+  <div class="search-content" onclick="event.stopPropagation()">
+    <div class="search-header">
+      <div class="search-title">🔍 ค้นหาข้อมูล</div>
+      <button class="close-btn" onclick="closeSearchModal()">✕</button>
+    </div>
+
+    <div class="search-input-group">
+      <input 
+        type="tel" 
+        id="searchPhone" 
+        class="search-input"
+        placeholder="กรอกเบอร์โทรศัพท์ 10 หลัก"
+        inputmode="numeric"
+        maxlength="10"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10);"
+      />
+    </div>
+
+    <button class="btn-search" onclick="searchData()">
+      ค้นหา
+    </button>
+
+    <div id="searchResults" class="search-results"></div>
+  </div>
+</div>
+
 <script>
 // ตั้งค่า LIFF และ GAS
 const LIFF_ID = "2008940385-hkDtMTsg";
@@ -286,7 +527,7 @@ async function init() {
     loadActivities();
   } catch (error) {
     console.error('LIFF init error:', error);
-    loadActivities(); // โหลดข้อมูลแม้จะไม่ได้เปิดใน LINE
+    loadActivities();
   }
 }
 
@@ -310,7 +551,6 @@ async function loadActivities() {
     });
   } catch (error) {
     console.error('Error loading activities:', error);
-    // ข้อมูลสำรองกรณีเชื่อมต่อ Database ไม่ได้
     activities = [
       { activity: "ธรรมยาตราเชียงราย", item: "รถบัสปรับอากาศ", travelTime: "08:00 น." },
       { activity: "ธรรมยาตราเชียงราย", item: "รถตู้", travelTime: "09:00 น." }
@@ -381,18 +621,16 @@ async function submitForm() {
       body: JSON.stringify(payload)
     });
 
-    // ซ่อนฟอร์มและป้ายสถานะ
     document.getElementById('form').style.display = "none";
     document.getElementById('statusContainer').style.display = "none";
     
-    // แสดงหน้าสรุปผล
     document.getElementById('summary').style.display = "block";
     document.getElementById('sumText').innerHTML = `
       <div><strong>👤 ชื่อ-สกุล:</strong> ${inputName}</div>
       <div><strong>📞 เบอร์โทร:</strong> ${phone}</div>
       <div><strong>🎯 กิจกรรม:</strong> ${activity}</div>
       <div><strong>📦 รายการ:</strong> ${item}</div>
-      <div><strong>🕒 เวลาเดินทาง:</strong> ${travelTime}</div>
+      <div><strong>🕐 เวลาเดินทาง:</strong> ${travelTime}</div>
     `;
   } catch (error) {
     alert('บันทึกล้มเหลว กรุณาลองใหม่อีกครั้ง');
@@ -413,6 +651,91 @@ function resetForm() {
   document.getElementById('statusContainer').style.display = 'block';
   document.getElementById('saveBtn').disabled = true;
 }
+
+// Search Modal Functions
+function openSearchModal() {
+  document.getElementById('searchModal').classList.add('active');
+  document.getElementById('searchPhone').value = '';
+  document.getElementById('searchResults').innerHTML = '';
+}
+
+function closeSearchModal(event) {
+  if (!event || event.target.id === 'searchModal') {
+    document.getElementById('searchModal').classList.remove('active');
+  }
+}
+
+async function searchData() {
+  const phone = document.getElementById('searchPhone').value.trim();
+  const resultsDiv = document.getElementById('searchResults');
+  
+  if (phone.length !== 10) {
+    resultsDiv.innerHTML = `
+      <div class="no-results">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        <p>กรุณากรอกเบอร์โทรศัพท์ 10 หลัก</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Show loading
+  resultsDiv.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>กำลังค้นหา...</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch(`${GAS_URL}?mode=search&phone=${phone}`);
+    const data = await response.json();
+
+    if (data && data.length > 0) {
+      let html = '';
+      data.forEach((item, index) => {
+        html += `
+          <div class="result-item">
+            <div><strong>👤 ชื่อ-สกุล:</strong> ${item.name || '-'}</div>
+            <div><strong>📞 เบอร์โทร:</strong> ${item.phone || '-'}</div>
+            <div><strong>🎯 กิจกรรม:</strong> ${item.activity || '-'}</div>
+            <div><strong>📦 รายการ:</strong> ${item.item || '-'}</div>
+            <div><strong>🕐 เวลาเดินทาง:</strong> ${item.travelTime || '-'}</div>
+            <div><strong>📅 วันที่บันทึก:</strong> ${item.timestamp || '-'}</div>
+          </div>
+        `;
+      });
+      resultsDiv.innerHTML = html;
+    } else {
+      resultsDiv.innerHTML = `
+        <div class="no-results">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <p>ไม่พบข้อมูลเบอร์โทร ${phone}</p>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Search error:', error);
+    resultsDiv.innerHTML = `
+      <div class="no-results">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        <p>เกิดข้อผิดพลาดในการค้นหา<br>กรุณาลองใหม่อีกครั้ง</p>
+      </div>
+    `;
+  }
+}
+
+// Allow Enter key to search
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('searchPhone');
+  if (searchInput) {
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        searchData();
+      }
+    });
+  }
+});
 
 init();
 </script>
